@@ -1,0 +1,27 @@
+Databases:
+customer
+    custNo = orNo
+    arrTime
+    depTime
+    partySize
+    checkoutPref
+menu
+    itemNo
+    name
+    category
+    price
+invoice //for transactions - together with invoiceOrder
+    orNo = custNo
+    paymentMode
+    discountAmt
+    date
+    totalAmt
+    receiveAmt
+customerOrder //for customer reports - list of orders
+    custNo = orNo
+    itemNo
+    qty
+transaction //information link or metadata
+    transNo
+    orNo
+    custNo
