@@ -1,27 +1,27 @@
 Databases:
 customer
-    custNo = orNo
+    custNo
     arrTime
     depTime
     partySize
     checkoutPref
 menu
-    itemNo
+    menuNo
     name
     category
     price
 invoice //for transactions - together with invoiceOrder
-    orNo = custNo
-    paymentMode
+    invoiceNo
     discountAmt
     date
     totalAmt
     receiveAmt
-customerOrder //for customer reports - list of orders
-    custNo = orNo
-    itemNo
+foodOrders
+    orderNo
+    menuNo
     qty
-transaction //information link or metadata
+transaction
     transNo
-    orNo
     custNo
+    invoiceNo
+    orderNo
