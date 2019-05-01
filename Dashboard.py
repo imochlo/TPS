@@ -14,29 +14,32 @@ category_list=["Appetizers", "Soup", "Salad", "Sandwiches", "Pasta", "Entree", "
 
 class DashboardWindow():
     def __init__ (self, master):
-        master.title("TPSys Reports")
+        master.title("TPSys Dashboard")
 
         self.init_backBtn(master)
 
-        self.frame2 = Frame(master, background="red", height=percentSCRNH(30))
+        self.frame2 = Frame(master, background="red")
         self.frame2.pack(side=TOP, fill=BOTH, expand=True)
         self.generate_tableTree(self.frame2)
 
-        self.frame3 = Frame(master, background="blue", width=percentSCRNW(20), height=percentSCRNH(45))
+        self.frame3 = Frame(master, background="blue")
         self.frame3.pack(side=LEFT, fill=BOTH, expand=True)
         self.init_catBtn(self.frame3)
 
-        self.frame4 = Frame(master, background="white", width=percentSCRNW(20), height=percentSCRNH(45))
+        self.frame4 = Frame(master, background="white")
         self.frame4.pack(side=LEFT, fill=BOTH, expand=True)
         self.generate_catTree(self.frame4)
 
-        self.frame5 = Frame(master, background="yellow", width=percentSCRNW(20), height=percentSCRNH(45))
+        self.frame5 = Frame(master, background="yellow")
         self.frame5.pack(side=LEFT, fill=BOTH, expand=True)
         self.generate_billTree(self.frame5)
 
-        self.frame6 = Frame(master, background="green", width=percentSCRNW(20), height=percentSCRNH(45))
+        self.frame6 = Frame(master, background="green")
         self.frame6.pack(side=LEFT, fill=BOTH, expand=True)
         self.init_billBtn(self.frame6)
+        
+        #setFullScreen(master)
+
 
     def init_backBtn(self, frame):
         self.btnBack = Button(frame, text="Back to main window", height=percentSCRNH(0.3))
@@ -69,7 +72,6 @@ class DashboardWindow():
         self.tableTree.delete(*self.tableTree.get_children())
 
         self.results=getListFromDb("SELECT * FROM menu WHERE category='Appetizers'") 
-        print(self.results)
 
         for row in self.results:
             _values=[row[name_index], row[price_index], "add"]
@@ -179,6 +181,7 @@ def percentSCRNH(value):
 root = Tk()
 SCRN_W, SCRN_H = root.winfo_screenwidth(), root.winfo_screenheight()
 root.bind("<Control-w>", quit)
+root.geometry("%dx%d" % (percentSCRNW(70), percentSCRNH(70)))
 
 dashboard = DashboardWindow(root)
 root.mainloop()
