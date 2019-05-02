@@ -3,17 +3,23 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox as msgbox
 from tkinter import PhotoImage
-import tkinter as tk
 from PIL import ImageTk, Image
+import tkinter as tk
+
 import sqlite3
 import time
 import os
 
-CWD=os.getcwd()
+import Services
+
 category_list=["Appetizers", "Soup", "Salad", "Sandwiches", "Pasta", "Entree", "Soda", "Coolers", "Platter"] 
 
 class DashboardWindow():
     def __init__ (self, master):
+        self.pc = Services.Local(master)
+        self.db = Services.Db()
+
+        master.bind("<Control-w>", lambda event: master.destroy())
         master.title("TPSys Dashboard")
 
         self.init_backBtn(master)
@@ -38,7 +44,7 @@ class DashboardWindow():
         self.frame6.pack(side=LEFT, fill=BOTH, expand=True)
         self.init_billBtn(self.frame6)
         
-        #setFullScreen(master)
+        self.pc.setFullScreen(master)
 
 
     def init_backBtn(self, frame):
@@ -71,7 +77,7 @@ class DashboardWindow():
         self.tableTree.configure(yscrollcommand=self.tableScroll.set)
         self.tableTree.delete(*self.tableTree.get_children())
 
-        self.results=getListFromDb("SELECT * FROM menu WHERE category='Appetizers'") 
+        self.results=self.db.get("SELECT * FROM menu WHERE category='Appetizers'") 
 
         for row in self.results:
             _values=[row[name_index], row[price_index], "add"]
@@ -101,8 +107,7 @@ class DashboardWindow():
         self.catTree.configure(yscrollcommand=self.catScroll.set)
         self.catTree.delete(*self.catTree.get_children())
 
-        self.results=getListFromDb("SELECT * FROM menu WHERE category='Appetizers'") 
-        print(self.results)
+        self.results=self.db.get("SELECT * FROM menu WHERE category='Appetizers'") 
 
         for row in self.results:
             _values=[row[name_index], row[price_index], "add"]
@@ -132,8 +137,7 @@ class DashboardWindow():
         self.billTree.configure(yscrollcommand=self.billScroll.set)
         self.billTree.delete(*self.billTree.get_children())
 
-        self.results=getListFromDb("SELECT * FROM menu WHERE category='Appetizers'") 
-        print(self.results)
+        self.results=self.db.get("SELECT * FROM menu WHERE category='Appetizers'") 
 
         for row in self.results:
             _values=[row[name_index], row[price_index], "add"]
@@ -160,28 +164,11 @@ class DashboardWindow():
                 self.btn.grid(row=row_num, column=1, padx=5, pady=5)
                 row_num+=1
 
-def quit(event):
-        root.quit()
+if __name__ == '__main__':
+    root = Tk()
+    root.bind("<Control-w>", lambda event: root.destroy())
 
-def setFullScreen(window):
-    window.geometry("%dx%d" % (SCRN_W, SCRN_H))
+    pc = Services.Local(root)
 
-def getListFromDb(text_command):
-    db_conn = sqlite3.connect("db/TPSys.db")
-    db_crsr = db_conn.cursor()
-    db_crsr.execute(text_command)
-    return db_crsr.fetchall()
-
-def percentSCRNW(value):
-    return round(value*0.01*SCRN_W)
-
-def percentSCRNH(value):
-    return round(value*0.01*SCRN_H)
-
-root = Tk()
-SCRN_W, SCRN_H = root.winfo_screenwidth(), root.winfo_screenheight()
-root.bind("<Control-w>", quit)
-root.geometry("%dx%d" % (percentSCRNW(70), percentSCRNH(70)))
-
-dashboard = DashboardWindow(root)
-root.mainloop()
+    dashboard = DashboardWindow(root)
+    root.mainloop()

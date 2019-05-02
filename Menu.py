@@ -3,43 +3,139 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox as msgbox
 from tkinter import PhotoImage
-import tkinter as tk
 from PIL import ImageTk, Image
+import tkinter as tk
+
 import sqlite3
 import time
 import os
 
-CWD=os.getcwd()
+import Services
+processTest = "Add Item"
+menuItem = "4"
+
+class PopupMenu():
+    def __init__ (self, master):
+        self.master=master
+        self.pc = Services.Local(self.master)
+        self.db = Services.Db()
+        self.master.bind("<Control-w>", lambda event: master.destroy())
+
+
+    def popWindow(self, process, menuItem):
+        self.process=process
+        self.menuItem=menuItem
+        self.master.title(process)
+
+        frame = Frame(self.master)
+        frame.pack(padx=100, pady=50)
+
+        if (process == "Remove Item"):
+            self.genRemoveWindow(frame)
+        else:
+            self.genTemplateWindow(frame)
+
+    def genRemoveWindow(self, frame):
+        lblFrame = Frame(frame)
+        lblFrame.pack()
+
+        lbl = Label(lblFrame, text="Are you sure you want to delete this item?")
+        lbl.pack(side=TOP, pady=[0,20])
+        command = ("SELECT * FROM menu WHERE menuNo = " + self.menuItem)
+        result = self.db.get(command)
+
+        lbl = Label(lblFrame, text="Name: " + result[0][1])
+        lbl.pack(side=TOP, anchor=W)
+        lbl = Label(lblFrame, text="Category: " + result[0][2])
+        lbl.pack(side=TOP, anchor=W)
+        lbl = Label(lblFrame, text="Price: " + str(result[0][3]))
+        lbl.pack(side=TOP, anchor=W)
+
+        btnFrame = Frame(frame)
+        btnFrame.pack(anchor=E, side=TOP, pady=[20,0])
+
+        self.btn = Button(btnFrame, text="Cancel", command=self.master.destroy)
+        self.btn.pack(side=RIGHT)
+        self.btn = Button(btnFrame, text="Yes", command=self.genRemoveDone)
+        self.btn.pack(side=RIGHT, padx=10)
+
+    def genTemplateWindow(self, frame):
+        entryFrame = Frame(frame)
+        entryFrame.pack()
+
+        lbl=Label(entryFrame, text="Name: ")
+        lbl.grid(column=0, row=0)
+        entryName = Entry(entryFrame)
+        entryName.grid(column=1, row=0)
+
+        lbl=Label(entryFrame, text="Category: ")
+        lbl.grid(column=0, row=2)
+        entryCat = Entry(entryFrame)
+        entryCat.grid(column=1, row=2)
+
+        lbl=Label(entryFrame, text="Price: ")
+        lbl.grid(column=0, row=3)
+        entryPrice = Entry(entryFrame)
+        entryPrice.grid(column=1, row=3)
+
+        btnFrame = Frame(frame)
+        btnFrame.pack(anchor=E, side=TOP, pady=[20,0])
+
+        self.btn = Button(btnFrame, text="Cancel", command=self.master.destroy)
+        self.btn.pack(side=RIGHT)
+
+        self.btn = Button(btnFrame, text=self.process, command=self.genRemoveDone)
+        self.btn.pack(side=RIGHT, padx=10)
+
+    def genRemoveDone(self):
+        command = ("DELETE FROM menu WHERE menuNo = " + self.menuItem)
+        #self.db.set(command)
+        msgbox.showinfo(self.process, "Item Removed\n\n" + command)
+                
+
 class MenuWindow():
     def __init__ (self, master):
-        master.title("TPSys Menu")
-        self.init_backBtn(master)
+        self.no_index=0
+        self.name_index=1
+        self.cat_index=2
+        self.price_index=3
+        self.image_index=4
+        
+        self.rmCol = "#6"
+        self.editCol = "#5"
 
-        self.frame1 = Frame(master, background="red")
-        self.frame1.pack(side=TOP, fill=BOTH, expand=True)
-        self.generate_menuTree(self.frame1)
+        self.pc = Services.Local(master)
+        self.db = Services.Db()
 
-        #setFullScreen(master)
+        self.master = master
+        self.master.bind("<Control-w>", lambda event: master.destroy())
+        self.master.title("TPSys Menu")
+
+        frame = Frame(master, background="black")
+        frame.pack(side=TOP, fill=X)
+        self.init_backBtn(frame)
+
+        frame = Frame(master, background="red")
+        frame.pack(side=TOP, fill=BOTH, expand=True)
+        self.init_menuTree(frame)
+
+        self.generate_menuTree()
+
+        self.pc.setFullScreen(master)
 
     def init_backBtn(self, frame):
-        self.btnBack = Button(frame, text="Back to main window", height=percentSCRNH(0.3))
+        self.btnBack = Button(frame, text="Back to main window", height=2)
         self.btnBack.pack(side=TOP, fill=BOTH)
     
-    def init_fileMenu(self, master):
-        self.file_item = Menu(master, tearoff=0)
-        self.file_item.add_command(label='Add Item')
+    #def init_fileMenu(self, frame):
+    #    self.file_item = Menu(frame, tearoff=0)
+    #    self.file_item.add_command(label='Add Item')
 
-        self.file_list = Menu(master)
-        self.file_list.add_cascade(label='File', menu=self.file_item)
-        master.config(menu=self.file_list)
+    #    self.file_list = Menu(frame)
+    #    self.file_list.add_cascade(label='File', menu=self.file_item)
+    #    master.config(menu=self.file_list)
 
-    def generate_menuTree(self,frame):
-        no_index=0
-        name_index=1
-        cat_index=2
-        price_index=3
-        image_index=4
-
+    def init_menuTree(self, frame):
         self.menuFrame = Frame(frame)
         self.menuFrame.pack(expand=True, fill=BOTH, pady=100, padx=100)
 
@@ -58,51 +154,51 @@ class MenuWindow():
         self.menuTree.heading("price", text="Price")
         self.menuTree.heading("edit", text="Edit")
         self.menuTree.heading("rm", text="Add/Remove")
+
+        self.menuTree.bind("<Button-1>", self.processClick)
         self.menuTree.pack(side=LEFT, expand=True, fill=BOTH)
 
         self.scrollBar = ttk.Scrollbar(self.menuFrame, orient=VERTICAL, command=self.menuTree.yview)
         self.scrollBar.pack(side=RIGHT, fill=Y)
         self.menuTree.configure(yscrollcommand=self.scrollBar.set)
+
+    def generate_menuTree(self):
+        ttk.Style().configure("Treeview", rowheight=50)
         self.menuTree.delete(*self.menuTree.get_children())
 
-        self.results = getListFromDb("SELECT * FROM menu")
+        self.dbResults = self.db.get("SELECT * FROM menu")
 
-        self.menuTree.insert("", tk.END, text="addItemRow", value=("","","","","","Add Item"))
-        for row in self.results:
-
-            _values = [row[no_index], row[cat_index], row[name_index], row[price_index], "Edit this", "Remove this"]
+        self.menuTree.insert("", tk.END, 0, value=("","","","","","Add Item"))
+        self.listCounter=1
+        for row in self.dbResults:
+            _values = [row[self.no_index], row[self.cat_index], row[self.name_index], row[self.price_index], "Edit this", "Remove this"]
+            #_values = [counter, row[self.cat_index], row[self.name_index], row[self.price_index], "Edit this", "Remove this"]
+            self.listCounter+=1
 
             self.menuTree.insert("", tk.END, row[0], value=_values)
-            ttk.Style().configure("Treeview", rowheight=50)
 
-        self.menuTree.insert("", tk.END, text="addItemRow", value=("","","","","","Add Item"))
+        self.menuTree.insert("", tk.END, row[0]+1, value=("","","","","","Add Item"))
 
-def quit(event):
-        root.quit()
+    def processClick(self, event):
+        item = self.menuTree.identify('item', event.x, event.y)
+        row = self.menuTree.identify_row(event.y)
+        col = self.menuTree.identify_column(event.x)
+        popup = PopupMenu()
+        if (col == self.rmCol):
+            if (row == "0") or (row == str(len(self.dbResults)+1)):
+                msgbox.showinfo("add", "add")
+            else:
+                msgbox.showinfo("delete",row)
+        if (col == self.editCol):
+            msgbox.showinfo("edit", row)
 
-def setFullScreen(window):
-    window.geometry("%dx%d" % (SCRN_W, SCRN_H))
+if __name__ == '__main__':
+    root = Tk()
+    root.bind("<Control-w>", lambda event: root.destroy())
 
-def getListFromDb(text_command):
-    db_conn = sqlite3.connect("db/TPSys.db")
-    db_crsr = db_conn.cursor()
-    db_crsr.execute(text_command)
-    return db_crsr.fetchall()
+    pc = Services.Local(root)
 
-def percentSCRNW(value):
-    return round(value*0.01*SCRN_W)
-
-def percentSCRNH(value):
-    return round(value*0.01*SCRN_H)
-
-#root = Tk()
-#SCRN_W, SCRN_H = root.winfo_screenwidth(), root.winfo_screenheight()
-#root.bind("<Control-w>", quit)
-#root.geometry("%dx%d" % (percentSCRNW(70), percentSCRNH(70)))
-SCRN_W=700
-SCRN_H=700
-
-#startup = StartupWindow(root)
-#menu = MenuWindow(root)
-#reports = ReportsWindow(root)
-#root.mainloop()
+    #menu = MenuWindow(root)
+    test = PopupMenu(root)
+    test.popWindow(processTest, menuItem)
+    root.mainloop()
