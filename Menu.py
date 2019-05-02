@@ -11,7 +11,7 @@ import time
 import os
 
 import Services
-processTest = "Add Item"
+processTest = "Edit Item"
 menuItem = "4"
 
 class PopupMenu():
@@ -28,7 +28,7 @@ class PopupMenu():
         self.master.title(process)
 
         frame = Frame(self.master)
-        frame.pack(padx=100, pady=50)
+        frame.pack(padx=[70,100], pady=50, expand=True)
 
         if (process == "Remove Item"):
             self.genRemoveWindow(frame)
@@ -61,37 +61,43 @@ class PopupMenu():
 
     def genTemplateWindow(self, frame):
         entryFrame = Frame(frame)
-        entryFrame.pack()
+        entryFrame.pack(anchor=W,expand=True, fill=BOTH)
 
         lbl=Label(entryFrame, text="Name: ")
-        lbl.grid(column=0, row=0)
+        lbl.grid(column=0, row=0, stick=W)
         entryName = Entry(entryFrame)
         entryName.grid(column=1, row=0)
 
         lbl=Label(entryFrame, text="Category: ")
-        lbl.grid(column=0, row=2)
+        lbl.grid(column=0, row=2, stick=W)
         entryCat = Entry(entryFrame)
         entryCat.grid(column=1, row=2)
 
         lbl=Label(entryFrame, text="Price: ")
-        lbl.grid(column=0, row=3)
+        lbl.grid(column=0, row=3, stick=W)
         entryPrice = Entry(entryFrame)
         entryPrice.grid(column=1, row=3)
 
         btnFrame = Frame(frame)
-        btnFrame.pack(anchor=E, side=TOP, pady=[20,0])
+        btnFrame.pack(anchor=E, pady=[20,0])
 
         self.btn = Button(btnFrame, text="Cancel", command=self.master.destroy)
         self.btn.pack(side=RIGHT)
 
-        self.btn = Button(btnFrame, text=self.process, command=self.genRemoveDone)
+        #genUpdateDone = lambda x : (x == "Add Item") ? self.genAddDone : self.genEditDone
+        self.btn = Button(btnFrame, text=self.process, command= self.genAddDone if self.process=="Add Item" else self.genEditDone)
         self.btn.pack(side=RIGHT, padx=10)
 
     def genRemoveDone(self):
         command = ("DELETE FROM menu WHERE menuNo = " + self.menuItem)
         #self.db.set(command)
         msgbox.showinfo(self.process, "Item Removed\n\n" + command)
-                
+
+    def genAddDone(self):
+        msgbox.showinfo("add", "add")
+
+    def genEditDone(self):
+        msgbox.showinfo("edit", "edit")
 
 class MenuWindow():
     def __init__ (self, master):
