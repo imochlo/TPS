@@ -21,11 +21,12 @@ class StartupWindow():
     BTN_WIDTH = 10
 
     def __init__ (self, master):
+        self.master=master
         master.title("TPSys")
         self.init_label(master)
         self.init_buttons(master)
 
-    def init_label(self, master)
+    def init_label(self, master):
         self.lblFrame = Frame(master)
         self.lblFrame.pack(side=BOTTOM, padx=self.PAD_FRLB_X, pady=self.PAD_FRLB_Y)
         self.lblMain = Label(self.lblFrame, text = "Welcome to TPSys. Hover over a task.")
@@ -41,7 +42,7 @@ class StartupWindow():
         self.btnDashboard.bind('<Leave>', lambda event: self.lblMain.configure(text="Welcome to TPSys. Hover over a task."))
 
         #menu
-        self.btnMenu = Button(self.btnFrame, text = "Menu" , justify=CENTER, width=self.BTN_WIDTH, height = self.BTN_HEIGHT, command=setFullScreen)
+        self.btnMenu = Button(self.btnFrame, text = "Menu" , justify=CENTER, width=self.BTN_WIDTH, height = self.BTN_HEIGHT, command=self.genMenu)
         self.btnMenu.pack(side=LEFT, padx=self.PAD_FRBTN_X)
         self.btnMenu.bind('<Enter>', lambda event: self.lblMain.configure(text="Add or edit menu items"))
         self.btnMenu.bind('<Leave>', lambda event: self.lblMain.configure(text="Welcome to TPSys. Hover over a task."))
@@ -51,9 +52,14 @@ class StartupWindow():
         self.btnReports.bind('<Enter>', lambda event: self.lblMain.configure(text="Generate or view sales, customer, or order reports"))
         self.btnReports.bind('<Leave>', lambda event: self.lblMain.configure(text="Welcome to TPSys. Hover over a task."))
 
+    def genMenu(self):
+        newFrame = Toplevel(self.master)
+        menuWindow = MenuWindow(newFrame)
+
 
 class MenuWindow():
     def __init__ (self, master):
+        self.master=master
         setFullScreen(master)
         master.title("TPSys Menu")
         self.init_backBtn(master)
@@ -74,8 +80,11 @@ class MenuWindow():
     def init_backBtn(self, master):
         self.topFrame = Frame(master)
         self.topFrame.pack(side=TOP)
-        self.btnBack = Button(self.topFrame, text="Back to main window", width=SCRN_W, height =2)
+        self.btnBack = Button(self.topFrame, text="Back to main window", width=SCRN_W, height =2, command=self.goBack)
         self.btnBack.pack()
+
+    def goBack(self):
+        self.master.destroy()
     
     def init_fileMenu(self, master):
         self.file_item = Menu(master, tearoff=0)
@@ -246,7 +255,7 @@ root.resizable(False,False)
 SCRN_W, SCRN_H = root.winfo_screenwidth(), root.winfo_screenheight()
 root.bind("<Control-w>", quit)
 
-#startup = StartupWindow(root)
+startup = StartupWindow(root)
 #menu = MenuWindow(root)
-reports = ReportsWindow(root)
+#reports = ReportsWindow(root)
 root.mainloop()

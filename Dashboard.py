@@ -42,7 +42,7 @@ class DashboardWindow():
 
 
     def init_backBtn(self, frame):
-        self.btnBack = Button(frame, text="Back to main window", height=percentSCRNH(0.3))
+        self.btnBack = Button(frame, text="Back to main window", height=2)
         self.btnBack.pack(side=TOP, fill=BOTH)
 
     def init_tableTree(self, frame):
