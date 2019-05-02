@@ -95,12 +95,14 @@ def percentSCRNW(value):
 def percentSCRNH(value):
     return round(value*0.01*SCRN_H)
 
-root = Tk()
-SCRN_W, SCRN_H = root.winfo_screenwidth(), root.winfo_screenheight()
-root.bind("<Control-w>", quit)
-root.geometry("%dx%d" % (percentSCRNW(70), percentSCRNH(70)))
+#root = Tk()
+#SCRN_W, SCRN_H = root.winfo_screenwidth(), root.winfo_screenheight()
+#root.bind("<Control-w>", quit)
+#root.geometry("%dx%d" % (percentSCRNW(70), percentSCRNH(70)))
+SCRN_W=700
+SCRN_H=700
 
 #startup = StartupWindow(root)
-menu = MenuWindow(root)
+#menu = MenuWindow(root)
 #reports = ReportsWindow(root)
-root.mainloop()
+#root.mainloop()
