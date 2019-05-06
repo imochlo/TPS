@@ -7,6 +7,7 @@ import tkinter as tk
 
 import sqlite3
 import time
+import datetime
 import os
 
 class Local():
@@ -23,6 +24,12 @@ class Local():
 
     def getCWD(self):
         return os.getCWD()
+    
+    def getTimeNow(self):
+        return str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+    def getDateNow(self):
+        return str(datetime.datetime.now().strftime('%Y-%m-%d'))
 
 class Db():
     def __init__ (self):

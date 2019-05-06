@@ -159,7 +159,7 @@ class PopupMenu():
 
     def updateAndDestroy(self):
         self.top.destroy()
-        self.parentClass.generate_menuTree()
+        self.parentClass.generateMenuTree()
         del self
 
 class MenuWindow():
@@ -180,9 +180,9 @@ class MenuWindow():
 
         self.treeFrame = Frame(master, background="red")
         self.treeFrame.pack(side=TOP, fill=BOTH, expand=True)
-        self.init_menuTree(self.treeFrame)
+        self.init_menuTree()
 
-        self.generate_menuTree()
+        self.generateMenuTree()
 
         self.pc.setFullScreen(master)
 
@@ -190,7 +190,7 @@ class MenuWindow():
         self.btnBack = Button(frame, text="Back to main window", height=2)
         self.btnBack.pack(side=TOP, fill=BOTH)
     
-    def init_menuTree(self, frame):
+    def init_menuTree(self):
         self.menuFrame = Frame(self.treeFrame)
         self.menuFrame.pack(expand=True, fill=BOTH, pady=100, padx=100)
 
@@ -216,17 +216,19 @@ class MenuWindow():
         self.scrollBar.pack(side=RIGHT, fill=Y)
         self.menuTree.configure(yscrollcommand=self.scrollBar.set)
 
-    def generate_menuTree(self):
+    def generateMenuTree(self):
         self.menuTree.bind("<Button-1>", self.processClick)
         ttk.Style().configure("Treeview", rowheight=50)
         self.menuTree.delete(*self.menuTree.get_children())
 
         self.dbResults = self.db.get("SELECT * FROM menu")
 
+        listInc=1
         self.menuTree.insert("", tk.END, 0, value=("","","","","","Add Item"))
         for row in self.dbResults:
-            _values = [row[no_index], row[cat_index], row[name_index], row[price_index], "Edit this", "Remove this"]
+            _values = [listInc, row[cat_index], row[name_index], row[price_index], "Edit this", "Remove this"]
             self.menuTree.insert("", tk.END, row[0], value=_values)
+            listInc+=1
 
         self.menuTree.insert("", tk.END, row[0]+1, value=("","","","","","Add Item"))
 
