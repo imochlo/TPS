@@ -21,13 +21,13 @@ price_index=3
 image_index=4
 
 class PopupMenu():
-    def __init__ (self, master):
+    def __init__ (self, master, parentClass):
         self.master=master
-        self.master.bind("<Control-w>", lambda event: master.destroy())
+        #self.master.bind("<Control-w>", lambda event: master.destroy())
+        self.parentClass = parentClass
 
         self.pc = Services.Local(self.master)
         self.db = Services.Db()
-
 
     def popWindow(self, process, menuItem):
         self.top=Toplevel(self.master)
@@ -44,6 +44,8 @@ class PopupMenu():
             self.genRemoveWindow(frame)
         else:
             self.genTemplateWindow(frame)
+
+        return True
 
     def genRemoveWindow(self, frame):
         lblFrame = Frame(frame)
@@ -64,7 +66,7 @@ class PopupMenu():
         btnFrame = Frame(frame)
         btnFrame.pack(anchor=E, side=TOP, pady=[20,0])
 
-        self.btn = Button(btnFrame, text="Cancel", command=self.master.destroy)
+        self.btn = Button(btnFrame, text="Cancel", command=self.top.destroy)
         self.btn.pack(side=RIGHT)
         self.btn = Button(btnFrame, text="Yes", command=self.genRemoveDone)
         self.btn.pack(side=RIGHT, padx=10)
@@ -73,7 +75,6 @@ class PopupMenu():
         self.cat_list = self.db.get("SELECT DISTINCT category FROM menu")
         if (self.process == "Edit Item"):
             result_list = self.db.get("SELECT * FROM menu WHERE menuNo = " + self.menuItem)
-            print(result_list)
 
         entryFrame = Frame(frame)
         entryFrame.pack(anchor=W,expand=True, fill=BOTH)
@@ -119,7 +120,7 @@ class PopupMenu():
         btnFrame = Frame(frame)
         btnFrame.pack(anchor=E, pady=[20,0])
 
-        self.btn = Button(btnFrame, text="Cancel", command=self.master.destroy)
+        self.btn = Button(btnFrame, text="Cancel", command=self.top.destroy)
         self.btn.pack(side=RIGHT)
 
         self.btn = Button(btnFrame, text=self.process, command= self.genAddDone if self.process=="Add Item" else self.genEditDone)
@@ -132,8 +133,9 @@ class PopupMenu():
     def genRemoveDone(self):
         command = ("DELETE FROM menu WHERE menuNo = " + self.menuItem)
         self.db.set(command)
+        self.db.get("SELECT * FROM Menu")
         msgbox.showinfo(self.process, "Item Removed\n\n" + command)
-        self.top.destroy()
+        self.updateAndDestroy()
 
     def genAddDone(self):
         name = self.entryName.get()
@@ -141,17 +143,24 @@ class PopupMenu():
         price = self.entryPrice.get()
         command = ("INSERT INTO menu(name, category, price) VALUES (\"%s\", \"%s\", %s)" % (name, cat, price))
         self.db.set(command)
+        self.db.get("SELECT * FROM Menu")
         msgbox.showinfo(self.process, "Item Added\n\n" + command)
-        self.top.destroy()
+        self.updateAndDestroy()
 
     def genEditDone(self):
         name = self.entryName.get()
         cat = self.entryCat.get()
         price = self.entryPrice.get()
-        command = ("UPDATE menu SET name = \"%s\", category = \"%s\", price = %s WHERE menuItem = %s" % (name, cat, price, self.menuItem))
+        command = ("UPDATE menu SET name = \"%s\", category = \"%s\", price = %s WHERE menuNo = %s" % (name, cat, price, self.menuItem))
         self.db.set(command)
+        self.db.get("SELECT * FROM Menu")
         msgbox.showinfo(self.process, "Item Edited\n\n" + command)
+        self.updateAndDestroy()
+
+    def updateAndDestroy(self):
         self.top.destroy()
+        self.parentClass.generate_menuTree()
+        del self
 
 class MenuWindow():
     def __init__ (self, master):
@@ -169,9 +178,9 @@ class MenuWindow():
         frame.pack(side=TOP, fill=X)
         self.init_backBtn(frame)
 
-        frame = Frame(master, background="red")
-        frame.pack(side=TOP, fill=BOTH, expand=True)
-        self.init_menuTree(frame)
+        self.treeFrame = Frame(master, background="red")
+        self.treeFrame.pack(side=TOP, fill=BOTH, expand=True)
+        self.init_menuTree(self.treeFrame)
 
         self.generate_menuTree()
 
@@ -182,7 +191,7 @@ class MenuWindow():
         self.btnBack.pack(side=TOP, fill=BOTH)
     
     def init_menuTree(self, frame):
-        self.menuFrame = Frame(frame)
+        self.menuFrame = Frame(self.treeFrame)
         self.menuFrame.pack(expand=True, fill=BOTH, pady=100, padx=100)
 
         self.menuTree = ttk.Treeview(self.menuFrame, column=("no","cat","name","price","edit","rm"), show='headings')
@@ -201,7 +210,6 @@ class MenuWindow():
         self.menuTree.heading("edit", text="Edit")
         self.menuTree.heading("rm", text="Add/Remove")
 
-        self.menuTree.bind("<Button-1>", self.processClick)
         self.menuTree.pack(side=LEFT, expand=True, fill=BOTH)
 
         self.scrollBar = ttk.Scrollbar(self.menuFrame, orient=VERTICAL, command=self.menuTree.yview)
@@ -209,17 +217,15 @@ class MenuWindow():
         self.menuTree.configure(yscrollcommand=self.scrollBar.set)
 
     def generate_menuTree(self):
+        self.menuTree.bind("<Button-1>", self.processClick)
         ttk.Style().configure("Treeview", rowheight=50)
         self.menuTree.delete(*self.menuTree.get_children())
 
         self.dbResults = self.db.get("SELECT * FROM menu")
 
         self.menuTree.insert("", tk.END, 0, value=("","","","","","Add Item"))
-        self.listCounter=1
         for row in self.dbResults:
             _values = [row[no_index], row[cat_index], row[name_index], row[price_index], "Edit this", "Remove this"]
-            self.listCounter+=1
-
             self.menuTree.insert("", tk.END, row[0], value=_values)
 
         self.menuTree.insert("", tk.END, row[0]+1, value=("","","","","","Add Item"))
@@ -228,13 +234,13 @@ class MenuWindow():
         item = self.menuTree.identify('item', event.x, event.y)
         row = self.menuTree.identify_row(event.y)
         col = self.menuTree.identify_column(event.x)
-        popup = PopupMenu(self.master)
+        popup = PopupMenu(self.master, self)
         if (col == self.rmCol):
-            if (row == "0") or (row == str(len(self.dbResults)+1)):
-                popup.popWindow("Add Item", row)
-            else:
+            if any(row == str(elem[0]) for elem in self.dbResults):
                 popup.popWindow("Remove Item",row)
-        if (col == self.editCol):
+            else:
+                popup.popWindow("Add Item", row)
+        if (col == self.editCol and any(row == str(elem[0]) for elem in self.dbResults)):
             popup.popWindow("Edit Item", row)
 
 if __name__ == '__main__':
