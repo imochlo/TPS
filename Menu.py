@@ -11,23 +11,33 @@ import time
 import os
 
 import Services
-processTest = "Edit Item"
+processTest = "Add Item"
 menuItem = "4"
+
+no_index=0
+name_index=1
+cat_index=2
+price_index=3
+image_index=4
 
 class PopupMenu():
     def __init__ (self, master):
         self.master=master
+        self.master.bind("<Control-w>", lambda event: master.destroy())
+
         self.pc = Services.Local(self.master)
         self.db = Services.Db()
-        self.master.bind("<Control-w>", lambda event: master.destroy())
 
 
     def popWindow(self, process, menuItem):
+        self.top=Toplevel(self.master)
+        self.top.bind("<Control-w>", lambda event: self.top.destroy())
+
         self.process=process
         self.menuItem=menuItem
-        self.master.title(process)
+        self.top.title(process)
 
-        frame = Frame(self.master)
+        frame = Frame(self.top)
         frame.pack(padx=[70,100], pady=50, expand=True)
 
         if (process == "Remove Item"):
@@ -60,53 +70,91 @@ class PopupMenu():
         self.btn.pack(side=RIGHT, padx=10)
 
     def genTemplateWindow(self, frame):
+        self.cat_list = self.db.get("SELECT DISTINCT category FROM menu")
+        if (self.process == "Edit Item"):
+            result_list = self.db.get("SELECT * FROM menu WHERE menuNo = " + self.menuItem)
+            print(result_list)
+
         entryFrame = Frame(frame)
         entryFrame.pack(anchor=W,expand=True, fill=BOTH)
 
+        # NAME ENTRY
         lbl=Label(entryFrame, text="Name: ")
-        lbl.grid(column=0, row=0, stick=W)
-        entryName = Entry(entryFrame)
-        entryName.grid(column=1, row=0)
+        lbl.grid(column=0, row=0, sticky=W)
+        self.entryName = Entry(entryFrame)
+        self.entryName.grid(column=1, row=0)
+        if (self.process == "Edit Item"):
+            self.entryName.insert(END, result_list[0][name_index])
 
+        # CATEGORY ENTRY
         lbl=Label(entryFrame, text="Category: ")
-        lbl.grid(column=0, row=2, stick=W)
-        entryCat = Entry(entryFrame)
-        entryCat.grid(column=1, row=2)
+        lbl.grid(column=0, row=2, sticky=W)
 
+        self.entryCat = Entry(entryFrame)
+        if (self.process == "Edit Item"):
+            self.entryCat.insert(END, result_list[0][cat_index])
+        self.entryCat.grid(column=1, row=2, sticky=E)
+        self.entryCat.bind('<Button>', lambda event : self.entryCat.delete(0,END))
+
+        listboxScrollbar = Scrollbar(entryFrame, orient=VERTICAL)
+        self.listboxCat = Listbox(entryFrame, yscrollcommand=listboxScrollbar.set)
+        listboxScrollbar.configure(command=self.listboxCat.yview)
+        listboxScrollbar.grid(column=2,row=3,sticky=NSEW)
+        self.listboxCat.grid(column=1, row=3)
+        self.listboxCat.bind('<<ListboxSelect>>', self.setCatText)
+
+        for cat in self.cat_list:
+            self.listboxCat.insert(0, cat[0])
+
+        # PRICE ENTRY
         lbl=Label(entryFrame, text="Price: ")
-        lbl.grid(column=0, row=3, stick=W)
-        entryPrice = Entry(entryFrame)
-        entryPrice.grid(column=1, row=3)
+        lbl.grid(column=0, row=4, sticky=W)
 
+        self.entryPrice = Entry(entryFrame)
+        if (self.process == "Edit Item"):
+            self.entryPrice.insert(END, result_list[0][price_index])
+        self.entryPrice.grid(column=1, row=4)
+
+        # BUTTONS
         btnFrame = Frame(frame)
         btnFrame.pack(anchor=E, pady=[20,0])
 
         self.btn = Button(btnFrame, text="Cancel", command=self.master.destroy)
         self.btn.pack(side=RIGHT)
 
-        #genUpdateDone = lambda x : (x == "Add Item") ? self.genAddDone : self.genEditDone
         self.btn = Button(btnFrame, text=self.process, command= self.genAddDone if self.process=="Add Item" else self.genEditDone)
         self.btn.pack(side=RIGHT, padx=10)
 
+    def setCatText(self, event):
+        self.entryCat.delete(0, END)
+        self.entryCat.insert(0, self.listboxCat.get(self.listboxCat.curselection()))
+
     def genRemoveDone(self):
         command = ("DELETE FROM menu WHERE menuNo = " + self.menuItem)
-        #self.db.set(command)
+        self.db.set(command)
         msgbox.showinfo(self.process, "Item Removed\n\n" + command)
+        self.top.destroy()
 
     def genAddDone(self):
-        msgbox.showinfo("add", "add")
+        name = self.entryName.get()
+        cat = self.entryCat.get()
+        price = self.entryPrice.get()
+        command = ("INSERT INTO table(name, category, price) VALUES (\"%s\", \"%s\", %s)" % (name, cat, price))
+        self.db.set(command)
+        msgbox.showinfo(self.process, "Item Added\n\n" + command)
+        self.top.destroy()
 
     def genEditDone(self):
-        msgbox.showinfo("edit", "edit")
+        name = self.entryName.get()
+        cat = self.entryCat.get()
+        price = self.entryPrice.get()
+        command = ("UPDATE menu SET name = \"%s\", category = \"%s\", price = %s WHERE menuItem = %s" % (name, cat, price, self.menuItem))
+        self.db.set(command)
+        msgbox.showinfo(self.process, "Item Edited\n\n" + command)
+        self.top.destroy()
 
 class MenuWindow():
     def __init__ (self, master):
-        self.no_index=0
-        self.name_index=1
-        self.cat_index=2
-        self.price_index=3
-        self.image_index=4
-        
         self.rmCol = "#6"
         self.editCol = "#5"
 
@@ -133,14 +181,6 @@ class MenuWindow():
         self.btnBack = Button(frame, text="Back to main window", height=2)
         self.btnBack.pack(side=TOP, fill=BOTH)
     
-    #def init_fileMenu(self, frame):
-    #    self.file_item = Menu(frame, tearoff=0)
-    #    self.file_item.add_command(label='Add Item')
-
-    #    self.file_list = Menu(frame)
-    #    self.file_list.add_cascade(label='File', menu=self.file_item)
-    #    master.config(menu=self.file_list)
-
     def init_menuTree(self, frame):
         self.menuFrame = Frame(frame)
         self.menuFrame.pack(expand=True, fill=BOTH, pady=100, padx=100)
@@ -177,8 +217,7 @@ class MenuWindow():
         self.menuTree.insert("", tk.END, 0, value=("","","","","","Add Item"))
         self.listCounter=1
         for row in self.dbResults:
-            _values = [row[self.no_index], row[self.cat_index], row[self.name_index], row[self.price_index], "Edit this", "Remove this"]
-            #_values = [counter, row[self.cat_index], row[self.name_index], row[self.price_index], "Edit this", "Remove this"]
+            _values = [row[no_index], row[cat_index], row[name_index], row[price_index], "Edit this", "Remove this"]
             self.listCounter+=1
 
             self.menuTree.insert("", tk.END, row[0], value=_values)
@@ -189,14 +228,14 @@ class MenuWindow():
         item = self.menuTree.identify('item', event.x, event.y)
         row = self.menuTree.identify_row(event.y)
         col = self.menuTree.identify_column(event.x)
-        popup = PopupMenu()
+        popup = PopupMenu(self.master)
         if (col == self.rmCol):
             if (row == "0") or (row == str(len(self.dbResults)+1)):
-                msgbox.showinfo("add", "add")
+                popup.popWindow("Add Item", row)
             else:
-                msgbox.showinfo("delete",row)
+                popup.popWindow("Remove Item",row)
         if (col == self.editCol):
-            msgbox.showinfo("edit", row)
+            popup.popWindow("Edit Item", row)
 
 if __name__ == '__main__':
     root = Tk()
@@ -204,7 +243,5 @@ if __name__ == '__main__':
 
     pc = Services.Local(root)
 
-    #menu = MenuWindow(root)
-    test = PopupMenu(root)
-    test.popWindow(processTest, menuItem)
+    menu = MenuWindow(root)
     root.mainloop()

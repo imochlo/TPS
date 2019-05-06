@@ -147,9 +147,9 @@ class DashboardWindow():
     def init_billBtn(self, frame):
         self.billoutFrame=Frame(frame)
         self.billoutFrame.pack(expand=True, padx=30)
-        self.billBtn=Button(self.billoutFrame, text="Bill Out")
+        self.billBtn=Button(self.billoutFrame, text="Bill Out", height=3, width=7)
         self.billBtn.grid(column=0, row=0)
-        self.cancelBtn=Button(self.billoutFrame, text="Cancel")
+        self.cancelBtn=Button(self.billoutFrame, text="Cancel", height=3, width=7)
         self.cancelBtn.grid(column=0, row=1)
 
     def init_catBtn(self, frame):
