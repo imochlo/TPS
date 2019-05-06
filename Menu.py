@@ -139,7 +139,7 @@ class PopupMenu():
         name = self.entryName.get()
         cat = self.entryCat.get()
         price = self.entryPrice.get()
-        command = ("INSERT INTO table(name, category, price) VALUES (\"%s\", \"%s\", %s)" % (name, cat, price))
+        command = ("INSERT INTO menu(name, category, price) VALUES (\"%s\", \"%s\", %s)" % (name, cat, price))
         self.db.set(command)
         msgbox.showinfo(self.process, "Item Added\n\n" + command)
         self.top.destroy()
