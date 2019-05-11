@@ -68,7 +68,7 @@ class PopupMenu():
 
         self.btn = Button(btnFrame, text="Cancel", command=self.top.destroy)
         self.btn.pack(side=RIGHT)
-        self.btn = Button(btnFrame, text="Yes", command=self.genRemoveDone)
+        self.btn = Button(btnFrame, text="Remove", command=lambda : self.genRemoveDone)
         self.btn.pack(side=RIGHT, padx=10)
 
     def genTemplateWindow(self, frame):
@@ -105,7 +105,7 @@ class PopupMenu():
         self.listboxCat.bind('<<ListboxSelect>>', self.setCatText)
 
         for cat in self.cat_list:
-            self.listboxCat.insert(0, cat[0])
+            self.listboxCat.insert(END, cat[0])
 
         # PRICE ENTRY
         lbl=Label(entryFrame, text="Price: ")
@@ -174,11 +174,11 @@ class MenuWindow():
         self.master.bind("<Control-w>", lambda event: master.destroy())
         self.master.title("TPSys Menu")
 
-        frame = Frame(master, background="black")
+        frame = Frame(master)
         frame.pack(side=TOP, fill=X)
         self.init_backBtn(frame)
 
-        self.treeFrame = Frame(master, background="red")
+        self.treeFrame = Frame(master)
         self.treeFrame.pack(side=TOP, fill=BOTH, expand=True)
         self.init_menuTree()
 
@@ -187,7 +187,7 @@ class MenuWindow():
         self.pc.setFullScreen(master)
 
     def init_backBtn(self, frame):
-        self.btnBack = Button(frame, text="Back to main window", height=2)
+        self.btnBack = Button(frame, text="Back to main window", height=2, command=self.master.destroy)
         self.btnBack.pack(side=TOP, fill=BOTH)
     
     def init_menuTree(self):

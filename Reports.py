@@ -22,22 +22,23 @@ rcv_index = 5
 
 class ReportsWindow():
     def __init__ (self, master):
+        self.master=master
         self.pc = Services.Local(master)
         self.db = Services.Db()
 
-        master.bind("<Control-w>", lambda event: master.destroy())
-        master.title("TPSys Reports")
+        self.master.bind("<Control-w>", lambda event: master.destroy())
+        self.master.title("TPSys Reports")
 
-        frame = Frame(master, background="black")
+        frame = Frame(master)
         frame.pack(side=TOP, fill=X)
         self.init_backBtn(frame)
 
-        frame = Frame(master, background="black")
+        frame = Frame(master)
         frame.pack(side=TOP, fill=X, pady=50, padx=100)
         self.init_filter(frame)
         self.init_reportBtns(frame)
 
-        self.treeFrame = Frame(master, background="yellow")
+        self.treeFrame = Frame(master)
         self.treeFrame.pack(side=TOP, fill=BOTH, expand=True)
 
         self.init_reportTree()
@@ -45,7 +46,7 @@ class ReportsWindow():
         self.pc.setFullScreen(master)
 
     def init_backBtn(self, frame):
-        self.btnBack = Button(frame, text="Back to main window", height=2)
+        self.btnBack = Button(frame, text="Back to main window", height=2, command=self.master.destroy)
         self.btnBack.pack(side=TOP, fill=BOTH)
 
     def init_filter(self,master):
@@ -87,7 +88,7 @@ class ReportsWindow():
 
     def init_reportTree(self):
         self.reportFrame = Frame(self.treeFrame)
-        self.reportFrame.pack(expand=True, fill=BOTH, pady=100, padx=100)
+        self.reportFrame.pack(expand=True, fill=BOTH, pady=[0,100], padx=100)
 
         self.reportTree = ttk.Treeview(self.reportFrame, show='headings')
         self.reportTree.pack(side=LEFT, expand=True, fill=BOTH)
@@ -144,11 +145,11 @@ class ReportsWindow():
     def genOrdersRep(self):
         if (self.durationOpt.get() == 1):
             dateNow = self.pc.getDateNow()
-            command = "SELECT menu.category, menu.name, sum(qty) FROM foodOrders inner join menu ON foodOrders.menuNo=menu.menuNo LEFT JOIN transactions ON foodOrders.orderNo=transactions.orderNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date = \"%s\" GROUP BY menu.menuNo ORDER BY menu.category" % (dateNow)
+            command = "SELECT menu.category, menu.name, sum(qty) FROM foodOrders inner join menu ON foodOrders.menuNo=menu.menuNo LEFT JOIN transactions ON foodOrders.orderNo=transactions.transNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date = \"%s\" GROUP BY menu.menuNo ORDER BY menu.category" % (dateNow)
         else:
             dateStart = str(self.dateStart.get_date())
             dateEnd = str(self.dateEnd.get_date())
-            command = "SELECT menu.category, menu.name, sum(qty) FROM foodOrders inner join menu ON foodOrders.menuNo=menu.menuNo LEFT JOIN transactions ON foodOrders.orderNo=transactions.orderNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date BETWEEN \"%s\" AND \"%s\" GROUP BY menu.menuNo ORDER BY menu.category" % (dateStart, dateEnd)
+            command = "SELECT menu.category, menu.name, sum(qty) FROM foodOrders inner join menu ON foodOrders.menuNo=menu.menuNo LEFT JOIN transactions ON foodOrders.orderNo=transactions.transNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date BETWEEN \"%s\" AND \"%s\" GROUP BY menu.menuNo ORDER BY menu.category" % (dateStart, dateEnd)
 
         self.dbResults = self.db.get(command)
 
@@ -176,11 +177,11 @@ class ReportsWindow():
     def genCustomersRep(self):
         if (self.durationOpt.get() == 1):
             dateNow = self.pc.getDateNow()
-            command = "SELECT customer.arrTime, customer.deptTime, customer.partySize, customer.checkoutPref, sum(foodOrders.qty) FROM foodOrders LEFT JOIN transactions ON foodOrders.orderNo=transactions.orderNo LEFT JOIN customer ON transactions.custNo=customer.custNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date IS NOT NULL AND invoice.date = \"%s\" GROUP BY foodOrders.orderNo" % dateNow
+            command = "SELECT customer.arrTime, customer.deptTime, customer.partySize, customer.checkoutPref, sum(foodOrders.qty) FROM foodOrders LEFT JOIN transactions ON foodOrders.orderNo=transactions.transNo LEFT JOIN customer ON transactions.custNo=customer.custNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date IS NOT NULL AND invoice.date = \"%s\" GROUP BY foodOrders.orderNo" % dateNow
         else:
             dateStart = str(self.dateStart.get_date())
             dateEnd = str(self.dateEnd.get_date())
-            command = "SELECT customer.arrTime, customer.deptTime, customer.partySize, customer.checkoutPref, sum(foodOrders.qty) FROM foodOrders LEFT JOIN transactions ON foodOrders.orderNo=transactions.orderNo LEFT JOIN customer ON transactions.custNo=customer.custNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date IS NOT NULL AND invoice.date BETWEEN \"%s\" AND \"%s\" GROUP BY foodOrders.orderNo" % (dateStart, dateEnd)
+            command = "SELECT customer.arrTime, customer.deptTime, customer.partySize, customer.checkoutPref, sum(foodOrders.qty) FROM foodOrders LEFT JOIN transactions ON foodOrders.orderNo=transactions.transNo LEFT JOIN customer ON transactions.custNo=customer.custNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date IS NOT NULL AND invoice.date BETWEEN \"%s\" AND \"%s\" GROUP BY foodOrders.orderNo" % (dateStart, dateEnd)
 
         self.dbResults = self.db.get(command)
 
