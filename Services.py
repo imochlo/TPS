@@ -33,7 +33,7 @@ class Local():
 
 class Db():
     def __init__ (self):
-        self.dbPath = "db/trial2.db"
+        self.dbPath = "db/TPS.db"
         pass
 
     def get(self, text_command):

@@ -112,12 +112,12 @@ class ReportsWindow():
         self.reportTree["columns"] = ("no", "date", "or", "ogPrice", "discount", "totPrice", "rcvAmt")
 
         self.reportTree.column("no", width=50, stretch=False)
-        self.reportTree.column("date", width=150, anchor=CENTER, stretch=False)
-        self.reportTree.column("or", width=200, anchor=CENTER, stretch=False)
-        self.reportTree.column("ogPrice", width=150, anchor=CENTER, stretch=False)
-        self.reportTree.column("discount", width=100, anchor=CENTER, stretch=False)
-        self.reportTree.column("totPrice", width=150, anchor=CENTER, stretch=False)
-        self.reportTree.column("rcvAmt", width=150, anchor=CENTER, stretch=False)
+        self.reportTree.column("date", anchor=CENTER, stretch=True)
+        self.reportTree.column("or", anchor=CENTER, stretch=True)
+        self.reportTree.column("ogPrice", anchor=CENTER, stretch=True)
+        self.reportTree.column("discount", anchor=CENTER, stretch=True)
+        self.reportTree.column("totPrice", anchor=CENTER, stretch=True)
+        self.reportTree.column("rcvAmt", anchor=CENTER, stretch=True)
 
         self.reportTree.heading("no", text="")
         self.reportTree.heading("date", text="Date")
@@ -156,9 +156,9 @@ class ReportsWindow():
         self.reportTree["columns"] = ("no", "cat", "name", "qty")
 
         self.reportTree.column("no", width=50, stretch=False)
-        self.reportTree.column("cat", width=200, anchor=CENTER, stretch=False)
-        self.reportTree.column("name", width=500, anchor=CENTER, stretch=False)
-        self.reportTree.column("qty", width=350, anchor=CENTER, stretch=False)
+        self.reportTree.column("cat", anchor=CENTER, stretch=True)
+        self.reportTree.column("name", anchor=CENTER, stretch=True)
+        self.reportTree.column("qty", anchor=CENTER, stretch=True)
 
         self.reportTree.heading("no", text="")
         self.reportTree.heading("cat", text="Category")
@@ -177,36 +177,39 @@ class ReportsWindow():
     def genCustomersRep(self):
         if (self.durationOpt.get() == 1):
             dateNow = self.pc.getDateNow()
-            command = "SELECT customer.arrTime, customer.deptTime, customer.partySize, customer.checkoutPref, sum(foodOrders.qty) FROM foodOrders LEFT JOIN transactions ON foodOrders.orderNo=transactions.transNo LEFT JOIN customer ON transactions.custNo=customer.custNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date IS NOT NULL AND invoice.date = \"%s\" GROUP BY foodOrders.orderNo" % dateNow
+            command = "SELECT customer.arrTime, customer.deptTime, customer.partySize, customer.checkoutPref, sum(foodOrders.qty), invoice.totAmt FROM foodOrders LEFT JOIN transactions ON foodOrders.orderNo=transactions.transNo LEFT JOIN customer ON transactions.custNo=customer.custNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date IS NOT NULL AND invoice.date = \"%s\" GROUP BY foodOrders.orderNo" % dateNow
+
         else:
             dateStart = str(self.dateStart.get_date())
             dateEnd = str(self.dateEnd.get_date())
-            command = "SELECT customer.arrTime, customer.deptTime, customer.partySize, customer.checkoutPref, sum(foodOrders.qty) FROM foodOrders LEFT JOIN transactions ON foodOrders.orderNo=transactions.transNo LEFT JOIN customer ON transactions.custNo=customer.custNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date IS NOT NULL AND invoice.date BETWEEN \"%s\" AND \"%s\" GROUP BY foodOrders.orderNo" % (dateStart, dateEnd)
+            command = "SELECT customer.arrTime, customer.deptTime, customer.partySize, customer.checkoutPref, sum(foodOrders.qty), invoice.totAmt FROM foodOrders LEFT JOIN transactions ON foodOrders.orderNo=transactions.transNo LEFT JOIN customer ON transactions.custNo=customer.custNo LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo WHERE invoice.date IS NOT NULL AND invoice.date BETWEEN \"%s\" AND \"%s\" GROUP BY foodOrders.orderNo" % (dateStart, dateEnd)
 
         self.dbResults = self.db.get(command)
 
-        self.reportTree["columns"] = ("no", "arrTime", "deptTime", "partySize", "checkoutPref", "orderSum")
+        self.reportTree["columns"] = ("no", "arrTime", "deptTime", "partySize", "checkoutPref", "orderSum", "totAmt")
 
         self.reportTree.column("no", width=50, stretch=False)
-        self.reportTree.column("arrTime", width=200, anchor=CENTER, stretch=False)
-        self.reportTree.column("deptTime", width=500, anchor=CENTER, stretch=False)
-        self.reportTree.column("partySize", width=350, anchor=CENTER, stretch=False)
-        self.reportTree.column("checkoutPref", width=350, anchor=CENTER, stretch=False)
-        self.reportTree.column("orderSum", width=350, anchor=CENTER, stretch=False)
+        self.reportTree.column("arrTime", anchor=CENTER, stretch=True)
+        self.reportTree.column("deptTime", anchor=CENTER, stretch=True)
+        self.reportTree.column("partySize", anchor=CENTER, stretch=True)
+        self.reportTree.column("checkoutPref", anchor=CENTER, stretch=True)
+        self.reportTree.column("orderSum", anchor=CENTER, stretch=True)
+        self.reportTree.column("totAmt", anchor=CENTER, stretch=True)
 
         self.reportTree.heading("no", text="")
         self.reportTree.heading("arrTime", text="Arrival Time")
         self.reportTree.heading("deptTime", text="Departure Time")
         self.reportTree.heading("partySize", text="Size of Party")
         self.reportTree.heading("checkoutPref", text="Checkout Preference")
-        self.reportTree.heading("orderSum", text="Number of Orders")
+        self.reportTree.heading("orderSum", text="Number of Orders" )
+        self.reportTree.heading("totAmt", text="TotalAmt")
 
         ttk.Style().configure("Treeview", rowheight=50)
         self.reportTree.delete(*self.reportTree.get_children())
 
         listInc=1
         for row in self.dbResults:
-            _values = [listInc, row[0], row[1], row[2], row[3], row[4]]
+            _values = [listInc, row[0], row[1], row[2], row[3], row[4], row[5]]
             self.reportTree.insert("", tk.END, value=_values)
             listInc+=1
 

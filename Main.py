@@ -47,7 +47,6 @@ class StartupWindow():
         self.btnDashboard.bind('<Enter>', lambda event: self.lblMain.configure(text="Input new transactions in the dashboard"))
         self.btnDashboard.bind('<Leave>', lambda event: self.lblMain.configure(text="Welcome to TPSys. Hover over a task."))
 
-        #menu
         self.btnMenu = Button(self.btnFrame, text = "Menu" , justify=CENTER, width=self.BTN_WIDTH, height = self.BTN_HEIGHT, command=self.genMenu)
         self.btnMenu.pack(side=LEFT, padx=self.PAD_FRBTN_X)
         self.btnMenu.bind('<Enter>', lambda event: self.lblMain.configure(text="Add or edit menu items"))

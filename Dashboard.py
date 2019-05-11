@@ -22,6 +22,7 @@ class PopupDashboard():
 
     def genRmTable(self, tableInfo):
         self.top = Toplevel(self.master)
+        self.top.title("Removing Table")
         self.top.bind("<Control-w>", lambda event: self.top.destroy())
 
         lblFrame=Frame(self.top)
@@ -65,6 +66,7 @@ class PopupDashboard():
 
     def genAddTable(self):
         self.top = Toplevel(self.master)
+        self.top.title("Add Table")
         self.top.bind("<Control-w>", lambda event: self.top.destroy())
 
         entryFrame = Frame(self.top)
@@ -88,9 +90,9 @@ class PopupDashboard():
         # Checkout Pref
         self.listboxCheckout = Listbox(entryFrame)
         self.listboxCheckout.grid(column=1, row=3)
-        checkoutPref = ["Dine-In", "Take-Out", "Delivery"]
-        for elem in checkoutPref:
-            self.listboxCheckout.insert(END, elem)
+        self.listboxCheckout.insert(0, "Dine-In")
+        self.listboxCheckout.insert(1, "Take-Out")
+        self.listboxCheckout.insert(2, "Delivery")
         self.listboxCheckout.selection_set(0)
 
         # BUTTONS
@@ -104,32 +106,30 @@ class PopupDashboard():
         self.btn.pack(side=RIGHT, padx=10)
 
     def genAddDone(self):
-        # Get Time and Date
+        # GET TIME AND DATE
         time=self.pc.getTimeNow()
         date=self.pc.getDateNow()
         
-        # Get table info
-
-        # Add Customer
+        # ADD CUSTOMER
         checkoutPref = self.listboxCheckout.get(self.listboxCheckout.curselection())
         addCustomer = "INSERT INTO customer(arrTime, checkoutPref) VALUES(\"%s\", \"%s\")" % (time, checkoutPref)
         self.db.set(addCustomer)
         custPK = int(self.db.get("SELECT max(custNo) FROM customer")[0][0])
 
-        # Update Customer
+        # UPDATE CUSTOMER
         if len(self.entryNo.get()):
-            updateTableNo = "UPDATE customer SET tableNo=%s WHERE custNo=%s" % (self.entrySize.get(), custPK)
+            updateTableNo = "UPDATE customer SET tableNo=%s WHERE custNo=%s" % (self.entryNo.get(), custPK)
             self.db.set(updateTableNo)
         if len(self.entrySize.get()):
             updateSize = "UPDATE customer SET partySize=%s WHERE custNo=%s" % (self.entrySize.get(), custPK)
             self.db.set(updateSize)
 
-        # Add default invoice
-        addInvoice = "INSERT INTO invoice(date, discount, ogPrice, totAmt) VALUES(%s, %s, %s, %s)" % (date, 0, 0, 0)
+        # ADD DEFAULT INVOICE
+        addInvoice = "INSERT INTO invoice(date, discount, ogPrice, totAmt) VALUES(\"%s\", %s, %s, %s)" % (date, 0, 0, 0)
         self.db.set(addInvoice)
         invoicePK = int(self.db.get("SELECT max(invoiceNo) FROM invoice")[0][0])
 
-        # Add transaction
+        # ADD TRANSACTION
         addTransaction = "INSERT INTO transactions(custNo, invoiceNo) VALUES(%s, %s)" % (custPK, invoicePK)
         self.db.set(addTransaction)
 
@@ -140,6 +140,7 @@ class PopupDashboard():
 
     def genBillOut(self, transNo):
         self.top = Toplevel(self.master)
+        self.top.title("Billing Out")
         self.top.bind("<Control-w>", lambda event: self.top.destroy())
 
         # TABLE INFO
@@ -196,7 +197,7 @@ class PopupDashboard():
         entryFrame = Frame(outerFrame)
         entryFrame.pack(side=RIGHT, fill=X, pady=30, padx=50)
         
-        self.totPrice=self.ogPrice
+        self.totPrice=round(self.ogPrice,2)
         lbl = Label(entryFrame, text="Total Price:")
         lbl.grid(row=0, column=0, sticky=W)
         self.lblTotal = Label(entryFrame, text=self.totPrice)
@@ -209,7 +210,6 @@ class PopupDashboard():
         self.entryDiscount.insert(END, 0)
         self.entryDiscount.bind('<Button>', lambda event : self.entryDiscount.delete(0,END))
         self.entryDiscount.bind('<FocusIn>', lambda event : self.entryDiscount.delete(0,END))
-        self.entryDiscount.bind('<Leave>', lambda event : self.recalculateTotal())
         self.entryDiscount.bind('<FocusOut>', lambda event : self.recalculateTotal())
         self.entryDiscount.bind('<Return>', lambda event : self.recalculateTotal())
 
@@ -231,6 +231,7 @@ class PopupDashboard():
         lbl.grid(row=3, column=0)
         self.lblChange = Label(entryFrame, text=self.totPrice)
         self.lblChange.grid(row=3, column=1, sticky=NSEW)
+        self.lblChange.configure(text=0)
 
         btnFrame = Frame(self.top)
         btnFrame.pack(fill=X, pady=30, padx=50)
@@ -246,22 +247,33 @@ class PopupDashboard():
         totAmt = self.totPrice
         rcvAmt = self.entryRcv.get()
         time=self.pc.getTimeNow()
-        updateTransaction = "UPDATE transactions SET discount=%s, ogPrice=%s, totAmt=%s,rcvAmt=%s WHERE transNo=%s" % (discount, ogPrice, totAmt, rcvAmt, transNo)
-        customerInfo = "SELECT custNo FROM transactions WHERE transNo=%s" % transNo
-        custNo = int(self.db.get(customerInfo)[0][0])
+
+        transactionInfo = self.db.get("SELECT custNo, invoiceNo FROM transactions WHERE transNo=%s" % transNo)
+        custNo = int(transactionInfo[0][0])
+        invoiceNo = int(transactionInfo[0][1])
+
+        updateTransaction = "UPDATE invoice SET discount=%s, ogPrice=%s, totAmt=%s,rcvAmt=%s WHERE invoiceNo=%s" % (discount, ogPrice, totAmt, rcvAmt, invoiceNo)
         updateDeptTime = "UPDATE customer SET deptTime=\"%s\" WHERE custNo=%s" % (time, custNo)
-        print(updateDeptTime)
+        self.db.set(updateTransaction)
         self.db.set(updateDeptTime)
+        self.parentClass.genTableTree()
+        self.parentClass.activeBill=0
+        self.parentClass.billTree.delete(*self.parentClass.billTree.get_children())
+        self.parentClass.tableBill.configure(text="Billing")
         self.top.destroy()
 
     def recalculateTotal(self):
-        discount = int(self.entryDiscount.get())
-        self.totPrice = (100 - discount) * 0.01 * self.totPrice
-        self.lblTotal.configure(text=self.totPrice)
+        discount = self.entryDiscount.get()
+        if (discount.isnumeric() and int(discount) < 100):
+            self.totPrice = round(((100 - int(discount)) * 0.01 * self.ogPrice),2)
+            self.lblTotal.configure(text=self.totPrice)
+        else:
+            self.entryDiscount.delete(0,END)
+            self.entryDiscount.insert(0,0)
 
     def recalculateChange(self):
-        rcvAmt = int(self.entryRcv.get())
-        change = (rcvAmt - self.totPrice) if rcvAmt > 0 else 0
+        rcvAmt = int(self.entryRcv.get()) if len(self.entryRcv.get()) > 0 else 0
+        change = round((rcvAmt - self.totPrice)) if rcvAmt > 0 else 0
         self.lblChange.configure(text=change)
 
 class DashboardWindow():
@@ -438,8 +450,8 @@ class DashboardWindow():
     def init_catBtn(self, frame):
 
         billBtnOuterFrame=Frame(frame)
-        billBtnOuterFrame.pack(side=LEFT, padx=[40,0], pady=[30,0])
-        billBtnInnerFrame= Frame(billBtnOuterFrame)
+        billBtnOuterFrame.pack(side=TOP, padx=[40,0], pady=[30,0])
+        billBtnInnerFrame = Frame(billBtnOuterFrame)
         billBtnInnerFrame.pack()
         lbl = Label(billBtnInnerFrame, text="Category List", font=30)
         lbl.pack(pady=[0,10])
@@ -467,17 +479,16 @@ class DashboardWindow():
     def genTableTree(self):
         self.tableTree.delete(*self.tableTree.get_children())
 
-        self.tableResults = self.db.get("SELECT transactions.transNo, customer.tableNo, customer.partySize, customer.checkoutPref, sum(foodOrders.qty), invoice.ogPrice FROM invoice INNER JOIN transactions ON invoice.invoiceNo=transactions.transNo LEFT JOIN foodOrders ON transactions.transNo=foodOrders.orderNo INNER JOIN customer ON transactions.custNo=customer.custNo WHERE invoice.rcvAmt IS NULL GROUP BY foodOrders.orderNo ORDER BY customer.arrTime ASC")
+        self.tableResults = self.db.get("SELECT transactions.transNo, customer.tableNo, customer.partySize, customer.checkoutPref, sum(qty), invoice.totAmt FROM transactions LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo LEFT JOIN foodOrders ON foodOrders.orderNo=transactions.transNo LEFT JOIN customer on transactions.custNo=customer.custNo WHERE invoice.rcvAmt IS NULL GROUP BY transactions.transNo ORDER BY customer.arrTime DESC")
 
-        self.tableInc=0
-        self.tableTree.insert("", tk.END, self.tableInc, values=("", "", "", "", "", "", "Add Table", "Add Table"))
+        self.tableInc=1
+        self.tableTree.insert("", tk.END, 0, values=("", "", "", "", "", "", "Add Table", "Add Table"))
 
         for row in self.tableResults:
-            self.tableInc+=1
             _values=[self.tableInc, row[1], row[2], row[3], row[4], row[5], "Select", "Remove"]
             self.tableTree.insert("", tk.END, self.tableInc, values=_values)
+            self.tableInc+=1
 
-        self.tableInc+=1
         self.tableTree.insert("", tk.END, self.tableInc, values=("", "", "", "", "", "", "Add Table", "Add Table"))
         ttk.Style().configure("Treeview", rowheight=30)
 
@@ -498,13 +509,14 @@ class DashboardWindow():
         col = self.tableTree.identify_column(event.x)
         
         if row.isnumeric():
-            elem=int(row)-1
-            if (col == self.tableSelectCol):
-                self.genBillTree(self.tableResults[elem][0])
-            elif (col == self.tableRemoveCol):
-                self.popup.genRmTable(self.tableResults[elem])
-        elif (col == self.tableSelectCol):
-            self.popup.genAddTable()
+            if int(row) > 0 and int(row) <= len(self.tableResults):
+                elem=int(row)-1
+                if (col == self.tableSelectCol):
+                    self.genBillTree(self.tableResults[elem][0])
+                elif (col == self.tableRemoveCol):
+                    self.popup.genRmTable(self.tableResults[elem])
+            elif (col == self.tableSelectCol or col == self.tableRemoveCol):
+                self.popup.genAddTable()
 
     def billProcessClick(self, event):
         item = self.billTree.identify('item', event.x, event.y)
@@ -541,7 +553,7 @@ class DashboardWindow():
             qty=int(row[1]) if row[1] is not None else 0
             ogPrice+=unit*qty
 
-        updateTotal="UPDATE invoice SET ogPrice=%s WHERE invoiceNo=%s" % (ogPrice, orderResults[0][2])
+        updateTotal="UPDATE invoice SET ogPrice=%s, totAmt=%s WHERE invoiceNo=%s" % (ogPrice, ogPrice, orderResults[0][2])
         self.db.set(updateTotal)
         self.genTableTree()
 
@@ -568,12 +580,12 @@ class DashboardWindow():
     def genBillTree(self, transNo):
         self.activeBill = transNo            
 
-        #Fix Label
+        #FIX LABEL
         custInfo = self.db.get("SELECT customer.tableNo, customer.checkoutPref FROM Transactions INNER JOIN customer ON transactions.custNo=customer.custNo WHERE transNo = %s" % transNo)
         billLabel = "For Table %s Billing" % custInfo[0][0] if (custInfo[0][0] != None) else "For %s Billing" % custInfo[0][1]
         self.tableBill.configure(text=billLabel)
 
-        #Get Billing Info
+        #GET BILLING INFO
         self.billTree.delete(*self.billTree.get_children())
         self.billResults = self.db.get("SELECT foodOrders.orderNo, menu.name, menu.price, foodOrders.qty, foodOrders.menuNo FROM foodOrders LEFT JOIN menu ON foodOrders.menuNo=menu.menuNo WHERE foodOrders.orderNo=%s" % self.activeBill)
 

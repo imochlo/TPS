@@ -11,9 +11,6 @@ import time
 import os
 
 import Services
-processTest = "Add Item"
-menuItem = "4"
-
 no_index=0
 name_index=1
 cat_index=2
@@ -23,7 +20,6 @@ image_index=4
 class PopupMenu():
     def __init__ (self, master, parentClass):
         self.master=master
-        #self.master.bind("<Control-w>", lambda event: master.destroy())
         self.parentClass = parentClass
 
         self.pc = Services.Local(self.master)
@@ -133,9 +129,7 @@ class PopupMenu():
     def genRemoveDone(self):
         command = ("DELETE FROM menu WHERE menuNo = " + self.menuItem)
         self.db.set(command)
-        self.db.get("SELECT * FROM Menu")
-        msgbox.showinfo(self.process, "Item Removed\n\n" + command)
-        self.updateAndDestroy()
+        msgbox.showinfo(self.process, "Item Removed")
 
     def genAddDone(self):
         name = self.entryName.get()
@@ -143,9 +137,7 @@ class PopupMenu():
         price = self.entryPrice.get()
         command = ("INSERT INTO menu(name, category, price) VALUES (\"%s\", \"%s\", %s)" % (name, cat, price))
         self.db.set(command)
-        self.db.get("SELECT * FROM Menu")
-        msgbox.showinfo(self.process, "Item Added\n\n" + command)
-        self.updateAndDestroy()
+        msgbox.showinfo(self.process, "Item Added")
 
     def genEditDone(self):
         name = self.entryName.get()
@@ -153,8 +145,7 @@ class PopupMenu():
         price = self.entryPrice.get()
         command = ("UPDATE menu SET name = \"%s\", category = \"%s\", price = %s WHERE menuNo = %s" % (name, cat, price, self.menuItem))
         self.db.set(command)
-        self.db.get("SELECT * FROM Menu")
-        msgbox.showinfo(self.process, "Item Edited\n\n" + command)
+        msgbox.showinfo(self.process, "Item Edited")
         self.updateAndDestroy()
 
     def updateAndDestroy(self):
@@ -207,8 +198,8 @@ class MenuWindow():
         self.menuTree.heading("cat", text="Category")
         self.menuTree.heading("name", text="Name")
         self.menuTree.heading("price", text="Price")
-        self.menuTree.heading("edit", text="Edit")
-        self.menuTree.heading("rm", text="Add/Remove")
+        self.menuTree.heading("edit", text="")
+        self.menuTree.heading("rm", text="")
 
         self.menuTree.pack(side=LEFT, expand=True, fill=BOTH)
 
@@ -224,13 +215,14 @@ class MenuWindow():
         self.dbResults = self.db.get("SELECT * FROM menu")
 
         listInc=1
-        self.menuTree.insert("", tk.END, 0, value=("","","","","","Add Item"))
+        self.menuTree.insert("", tk.END, 0, value=("","","","","Add Item","Add Item"))
+
         for row in self.dbResults:
             _values = [listInc, row[cat_index], row[name_index], row[price_index], "Edit this", "Remove this"]
             self.menuTree.insert("", tk.END, row[0], value=_values)
             listInc+=1
 
-        self.menuTree.insert("", tk.END, row[0]+1, value=("","","","","","Add Item"))
+        self.menuTree.insert("", tk.END, listInc, value=("","","","","Add Item","Add Item"))
 
     def processClick(self, event):
         item = self.menuTree.identify('item', event.x, event.y)
@@ -242,8 +234,11 @@ class MenuWindow():
                 popup.popWindow("Remove Item",row)
             else:
                 popup.popWindow("Add Item", row)
-        if (col == self.editCol and any(row == str(elem[0]) for elem in self.dbResults)):
-            popup.popWindow("Edit Item", row)
+        if (col == self.editCol):
+            if any(row == str(elem[0]) for elem in self.dbResults):
+                popup.popWindow("Edit Item", row)
+            else:
+                popup.popWindow("Add Item", row)
 
 if __name__ == '__main__':
     root = Tk()
