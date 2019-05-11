@@ -392,8 +392,8 @@ class DashboardWindow():
 
         billTreeInnerFrame=Frame(frame)
         billTreeInnerFrame.pack(pady=[30,0], padx=20)
-        lbl = Label(billTreeInnerFrame, text="Billing", font=30)
-        lbl.pack(pady=[0,10])
+        self.tableBill = Label(billTreeInnerFrame, text="Billing", font=30)
+        self.tableBill.pack(pady=[0,10])
 
         self.billFrame=Frame(billTreeInnerFrame)
         self.billFrame.pack(expand=True, fill=BOTH, pady=[0,30], padx=20)
