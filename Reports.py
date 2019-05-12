@@ -104,11 +104,11 @@ class ReportsWindow():
         # SALES REP SET UP
         if (self.durationOpt.get() == 1):
             dateNow = self.pc.getDateNow()
-            command = "SELECT date, invoiceNo, ogPrice, discount, totAmt, rcvAmt FROM invoice WHERE date and rcvAmt IS NOT NULL = \"%s\"" % dateNow
+            command = "SELECT date, invoiceNo, ogPrice, discount, totAmt, rcvAmt FROM invoice WHERE date = \"%s\" AND rcvAmt IS NOT NULL" % dateNow
         else:
             dateStart = str(self.dateStart.get_date())
             dateEnd = str(self.dateEnd.get_date())
-            command = "SELECT date, invoiceNo, ogPrice, discount, totAmt, rcvAmt FROM invoice WHERE date BETWEEN \"%s\"  AND \"%s\" and rcvAmt IS NOT NULL" % (dateStart, dateEnd)
+            command = "SELECT date, invoiceNo, ogPrice, discount, totAmt, rcvAmt FROM invoice WHERE date BETWEEN \"%s\" AND \"%s\" and rcvAmt IS NOT NULL" % (dateStart, dateEnd)
 
         self.dbResults = self.db.get(command)
 

@@ -34,7 +34,6 @@ class PopupMenu():
 
         self.process=process
 
-        print(menuItem)
         if menuItem != None:
             self.menuNo=menuItem[0]
             self.menuCat=menuItem[1]

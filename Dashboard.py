@@ -166,7 +166,7 @@ class PopupDashboard():
         lblFrame = Frame(outerFrame)
         lblFrame.pack(side=TOP, fill=X)
         custInfo = self.db.get("SELECT customer.tableNo, customer.checkoutPref FROM Transactions INNER JOIN customer ON transactions.custNo=customer.custNo WHERE transNo = %s" % transNo)
-        billLabel = "For Table %s Billing" % custInfo[0][0] if (custInfo[0][0] != None) else "For %s Billing" % custInfo[0][1]
+        billLabel = "For Table %s Order" % custInfo[0][0] if (custInfo[0][0] != None) else "For %s Order" % custInfo[0][1]
 
         lbl = Label(lblFrame, text= billLabel, font=30)
         lbl.pack()
@@ -287,7 +287,7 @@ class PopupDashboard():
         self.parentClass.genOpenTablesTree()
         self.parentClass.activeTable=0
         self.parentClass.tableOrdersTree.delete(*self.parentClass.tableOrdersTree.get_children())
-        self.parentClass.tableOrdersTree.configure(text="Billing")
+        self.parentClass.lblTable.configure(text="For Orders")
         self.top.destroy()
 
     def recalculateTotal(self):
@@ -638,7 +638,7 @@ class DashboardWindow():
         if (self.activeTable > 0):
             self.popup.genBillOut(self.activeTable)
         else:
-            msgbox.showerror("Error", "No Bill Selected")
+            msgbox.showerror("Error", "No Table Selected")
 
 if __name__ == '__main__':
     root = Tk()
