@@ -29,45 +29,46 @@ class StartupWindow():
     def __init__ (self, master):
         self.master=master
         master.title("TPSys")
-        self.init_label(master)
         self.init_buttons(master)
+        self.init_label(master)
 
     def init_label(self, master):
-        self.lblFrame = Frame(master)
-        self.lblFrame.pack(side=BOTTOM, padx=self.PAD_FRLB_X, pady=self.PAD_FRLB_Y)
-        self.lblMain = Label(self.lblFrame, text = "Welcome to TPSys. Hover over a task.")
-        self.lblMain.pack()
+        lblFrame = Frame(master)
+        lblFrame.pack(side=BOTTOM, padx=self.PAD_FRLB_X, pady=self.PAD_FRLB_Y)
+        self.lblInstructions = Label(lblFrame, text = "Welcome to TPSys. Hover over a task.")
+        self.lblInstructions.pack()
 
     def init_buttons(self, frame):
-        self.btnFrame = Frame(frame)
-        self.btnFrame.pack(padx=self.PAD_FRBTN_X, pady=self.PAD_FRBTN_Y)
+        btnsFrame = Frame(frame)
+        btnsFrame.pack(padx=self.PAD_FRBTN_X, pady=self.PAD_FRBTN_Y)
 
-        self.btnDashboard = Button(self.btnFrame, text = "Dashboard", justify=CENTER, width=self.BTN_WIDTH, height = self.BTN_HEIGHT, command=self.genDashboard)
-        self.btnDashboard.pack(side=LEFT, padx=self.PAD_FRBTN_X)
-        self.btnDashboard.bind('<Enter>', lambda event: self.lblMain.configure(text="Input new transactions in the dashboard"))
-        self.btnDashboard.bind('<Leave>', lambda event: self.lblMain.configure(text="Welcome to TPSys. Hover over a task."))
+        btnDashboard = Button(btnsFrame, text = "Dashboard", justify=CENTER, width=self.BTN_WIDTH, height = self.BTN_HEIGHT, command=self.genDashboard)
+        btnDashboard.pack(side=LEFT, padx=self.PAD_FRBTN_X)
+        btnDashboard.bind('<Enter>', lambda event: self.lblInstructions.configure(text="Input new transactions in the dashboard"))
+        btnDashboard.bind('<Leave>', lambda event: self.lblInstructions.configure(text="Welcome to TPSys. Hover over a task."))
 
-        self.btnMenu = Button(self.btnFrame, text = "Menu" , justify=CENTER, width=self.BTN_WIDTH, height = self.BTN_HEIGHT, command=self.genMenu)
-        self.btnMenu.pack(side=LEFT, padx=self.PAD_FRBTN_X)
-        self.btnMenu.bind('<Enter>', lambda event: self.lblMain.configure(text="Add or edit menu items"))
-        self.btnMenu.bind('<Leave>', lambda event: self.lblMain.configure(text="Welcome to TPSys. Hover over a task."))
+        btnMenu = Button(btnsFrame, text = "Menu" , justify=CENTER, width=self.BTN_WIDTH, height = self.BTN_HEIGHT, command=self.genMenu)
+        btnMenu.pack(side=LEFT, padx=self.PAD_FRBTN_X)
 
-        self.btnReports = Button(self.btnFrame, text = "Reports", justify=CENTER, width=self.BTN_WIDTH, height = self.BTN_HEIGHT, comman=self.genReports)
-        self.btnReports.pack(side=LEFT, padx=self.PAD_FRBTN_X)
-        self.btnReports.bind('<Enter>', lambda event: self.lblMain.configure(text="Generate or view sales, customer, or order reports"))
-        self.btnReports.bind('<Leave>', lambda event: self.lblMain.configure(text="Welcome to TPSys. Hover over a task."))
+        btnMenu.bind('<Enter>', lambda event: self.lblInstructions.configure(text="Add or edit menu items"))
+        btnMenu.bind('<Leave>', lambda event: self.lblInstructions.configure(text="Welcome to TPSys. Hover over a task."))
+
+        btnReports = Button(btnsFrame, text = "Reports", justify=CENTER, width=self.BTN_WIDTH, height = self.BTN_HEIGHT, comman=self.genReports)
+        btnReports.pack(side=LEFT, padx=self.PAD_FRBTN_X)
+        btnReports.bind('<Enter>', lambda event: self.lblInstructions.configure(text="Generate or view sales, customer, or order reports"))
+        btnReports.bind('<Leave>', lambda event: self.lblInstructions.configure(text="Welcome to TPSys. Hover over a task."))
 
     def genDashboard(self):
-        newFrame = Toplevel(self.master)
-        dashBoardWindow = Dashboard.DashboardWindow(newFrame)
+        topFrame = Toplevel(self.master)
+        dashBoardWindow = Dashboard.DashboardWindow(topFrame)
 
     def genMenu(self):
-        newFrame = Toplevel(self.master)
-        menuWindow = Menu.MenuWindow(newFrame)
+        topFrame = Toplevel(self.master)
+        menuWindow = Menu.MenuWindow(topFrame)
 
     def genReports(self):
-        newFrame = Toplevel(self.master)
-        reportsWindow = Reports.ReportsWindow(newFrame)
+        topFrame = Toplevel(self.master)
+        reportsWindow = Reports.ReportsWindow(topFrame)
 
 
 if __name__ == "__main__":

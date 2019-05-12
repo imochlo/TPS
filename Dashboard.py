@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#/usr/bin/python
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox as msgbox
@@ -14,39 +14,45 @@ import Services
 
 class PopupDashboard():
     def __init__(self, master, parentClass):
-        self.master=master
+
+        self.master = master
         self.parentClass = parentClass
 
-        self.pc=Services.Local(self.master)
-        self.db=Services.Db()
+        self.pc = Services.Local(self.master)
+        self.db = Services.Db()
 
     def genRmTable(self, tableInfo):
+
         self.top = Toplevel(self.master)
+
+        topFrame = Frame(self.top)
+        topFrame.pack(expand=True, pady=50, padx=100)
+
         self.top.title("Removing Table")
         self.top.bind("<Control-w>", lambda event: self.top.destroy())
 
-        lblFrame=Frame(self.top)
+        lblFrame=Frame(topFrame)
         lblFrame.pack()
-        lblFrame.pack(side=TOP, pady=[50,20], padx=100)
 
-        lbl = Label(lblFrame, text="Are you sure you want to delete this item?")
+        lbl = Label(lblFrame, text="Are you sure you want to delete this item?", justify=LEFT)
 
-        lbl = Label(lblFrame, text="Table No: " + str(tableInfo[1]))
+        lbl = Label(lblFrame, text="Table No: " + str(tableInfo[1]), justify=LEFT)
         lbl.grid(row=0, sticky=W)
-        lbl = Label(lblFrame, text="Size: " + str(tableInfo[2]))
+        lbl = Label(lblFrame, text="Size: " + str(tableInfo[2]), justify=LEFT)
         lbl.grid(row=1, sticky=W)
-        lbl = Label(lblFrame, text="Checkout Preference: " + str(tableInfo[3]))
+        lbl = Label(lblFrame, text="Checkout Preference: " + str(tableInfo[3]), justify=LEFT)
         lbl.grid(row=2, sticky=W)
 
-        btnFrame = Frame(self.top)
-        btnFrame.pack(side=TOP, pady=[20,50], padx=100)
+        btnFrame = Frame(topFrame)
+        btnFrame.pack(side=RIGHT, pady=[20,0])
 
-        self.btn = Button(btnFrame, text="Cancel", command=self.top.destroy)
-        self.btn.pack(side=RIGHT)
-        self.btn = Button(btnFrame, text="Remove", command=lambda : self.genRemoveDone(tableInfo[0]))
-        self.btn.pack(side=RIGHT, padx=10)
+        btn = Button(btnFrame, text="Cancel", command=self.top.destroy)
+        btn.pack(side=RIGHT)
+        btn = Button(btnFrame, text="Remove", command=lambda : self.genRemoveDone(tableInfo[0]))
+        btn.pack(side=RIGHT, padx=[0,10])
 
     def genRemoveDone(self, transNo):
+
         getTables="SELECT * FROM transactions WHERE transNo = " + str(transNo)
         pks = self.db.get(getTables)
 
@@ -61,43 +67,51 @@ class PopupDashboard():
         self.db.set(rmTransaction)
         
         msgbox.showinfo("Item Removed", "Item Removed\n\n")
-        self.parentClass.genTableTree()
+
+        self.parentClass.genOpenTablesTree()
         self.top.destroy()
 
     def genAddTable(self):
+
         self.top = Toplevel(self.master)
         self.top.title("Add Table")
         self.top.bind("<Control-w>", lambda event: self.top.destroy())
 
-        entryFrame = Frame(self.top)
-        entryFrame.pack(side=TOP, pady=[50,20], padx=100)
+        mainFrame = Frame(self.top)
+        mainFrame.pack(expand=True, padx=100, pady=100)
 
-        # Table No
-        lbl=Label(entryFrame, text="Table No: ")
+        entryFrame = Frame(mainFrame)
+        entryFrame.pack()
+
+        # TABLE NO
+        lbl=Label(entryFrame, text="Table No:")
         lbl.grid(column=0, row=0, sticky=W)
         self.entryNo = Entry(entryFrame)
         self.entryNo.grid(column=1, row=0)
         self.entryNo.bind('<Button>', lambda event : self.entrySize.delete(0,END))
 
-        # No. of Guests
-        lbl=Label(entryFrame, text="No. of Guests")
+        # NO. OF GUESTS
+        lbl=Label(entryFrame, text="No. of Guests:")
         lbl.grid(column=0, row=1, sticky=W)
 
         self.entrySize = Entry(entryFrame)
         self.entrySize.grid(column=1, row=1, sticky=E)
         self.entrySize.bind('<Button>', lambda event : self.entrySize.delete(0,END))
 
-        # Checkout Pref
+        # CHECKOUT PREF
+        lbl=Label(entryFrame, text="Checkout Preference:")
+        lbl.grid(column=0, row=2, sticky=NW)
+
         self.listboxCheckout = Listbox(entryFrame)
-        self.listboxCheckout.grid(column=1, row=3)
+        self.listboxCheckout.grid(column=1, row=2)
         self.listboxCheckout.insert(0, "Dine-In")
         self.listboxCheckout.insert(1, "Take-Out")
         self.listboxCheckout.insert(2, "Delivery")
         self.listboxCheckout.selection_set(0)
 
         # BUTTONS
-        btnFrame = Frame(self.top)
-        btnFrame.pack(side=TOP, pady=[20,50], padx=100)
+        btnFrame = Frame(mainFrame)
+        btnFrame.pack(side=RIGHT, pady=[30,0])
 
         self.btn = Button(btnFrame, text="Cancel", command=self.top.destroy)
         self.btn.pack(side=RIGHT)
@@ -106,25 +120,26 @@ class PopupDashboard():
         self.btn.pack(side=RIGHT, padx=10)
 
     def genAddDone(self):
+
         # GET TIME AND DATE
         time=self.pc.getTimeNow()
         date=self.pc.getDateNow()
         
         # ADD CUSTOMER
-        checkoutPref = self.listboxCheckout.get(self.listboxCheckout.curselection())
+        checkoutPref = self.listboxCheckout.get(ANCHOR) if len(self.listboxCheckout.get(ANCHOR)) > 0 else "Dine-In"
         addCustomer = "INSERT INTO customer(arrTime, checkoutPref) VALUES(\"%s\", \"%s\")" % (time, checkoutPref)
         self.db.set(addCustomer)
         custPK = int(self.db.get("SELECT max(custNo) FROM customer")[0][0])
 
         # UPDATE CUSTOMER
-        if len(self.entryNo.get()):
+        if len(self.entryNo.get()) > 0:
             updateTableNo = "UPDATE customer SET tableNo=%s WHERE custNo=%s" % (self.entryNo.get(), custPK)
             self.db.set(updateTableNo)
-        if len(self.entrySize.get()):
+        if len(self.entrySize.get()) > 0:
             updateSize = "UPDATE customer SET partySize=%s WHERE custNo=%s" % (self.entrySize.get(), custPK)
             self.db.set(updateSize)
 
-        # ADD DEFAULT INVOICE
+        # ADD INVOICE
         addInvoice = "INSERT INTO invoice(date, discount, ogPrice, totAmt) VALUES(\"%s\", %s, %s, %s)" % (date, 0, 0, 0)
         self.db.set(addInvoice)
         invoicePK = int(self.db.get("SELECT max(invoiceNo) FROM invoice")[0][0])
@@ -134,78 +149,86 @@ class PopupDashboard():
         self.db.set(addTransaction)
 
         transPK = int(self.db.get("SELECT max(transNo) FROM transactions")[0][0])
-        self.parentClass.genTableTree()
-        self.parentClass.genBillTree(transPK)
+        self.parentClass.genOpenTablesTree()
+        self.parentClass.genTableOrders(transPK)
         self.top.destroy()
 
     def genBillOut(self, transNo):
+
         self.top = Toplevel(self.master)
         self.top.title("Billing Out")
         self.top.bind("<Control-w>", lambda event: self.top.destroy())
 
-        # TABLE INFO
-        lblFrame = Frame(self.top)
-        lblFrame.pack(side=TOP, pady=50)
+        outerFrame = Frame(self.top)
+        outerFrame.pack(expand=True, padx=100, pady=100)
+
+        # LABEL SET UP
+        lblFrame = Frame(outerFrame)
+        lblFrame.pack(side=TOP, fill=X)
         custInfo = self.db.get("SELECT customer.tableNo, customer.checkoutPref FROM Transactions INNER JOIN customer ON transactions.custNo=customer.custNo WHERE transNo = %s" % transNo)
         billLabel = "For Table %s Billing" % custInfo[0][0] if (custInfo[0][0] != None) else "For %s Billing" % custInfo[0][1]
 
         lbl = Label(lblFrame, text= billLabel, font=30)
         lbl.pack()
 
-        self.sumFrame = Frame(self.top)
-        self.sumFrame.pack(expand=True, fill=BOTH, padx=50)
+        sumFrame = Frame(outerFrame)
+        sumFrame.pack(fill=X)
 
-        self.sumTree = ttk.Treeview(self.sumFrame, column=("order","unit","qty","total"), show='headings')
+        # TREE SUMMARY SET UP
+        sumTree = ttk.Treeview(sumFrame, column=("order","unit","qty","total"), show='headings')
+        ttk.Style().configure("Treeview")
 
-        self.sumTree.column("order", width=200, anchor=W)
-        self.sumTree.column("unit", width=100)
-        self.sumTree.column("qty", width=100)
-        self.sumTree.column("total", width=100, anchor=CENTER)
+        sumTree.column("order", width=200, anchor=W)
+        sumTree.column("unit", width=100)
+        sumTree.column("qty", width=100)
+        sumTree.column("total", width=100, anchor=CENTER)
 
-        self.sumTree.heading("order", text="Items")
-        self.sumTree.heading("unit", text="Unit Price")
-        self.sumTree.heading("qty", text="Qty")
-        self.sumTree.heading("total", text="Total Price")
+        sumTree.heading("order", text="Items")
+        sumTree.heading("unit", text="Unit Price")
+        sumTree.heading("qty", text="Qty")
+        sumTree.heading("total", text="Total Price")
 
-        self.sumTree.pack(side=LEFT, expand=True, fill=BOTH)
+        sumTree.pack(side=LEFT)
 
-        self.scrollBar = ttk.Scrollbar(self.sumFrame, orient=VERTICAL, command=self.sumTree.yview)
-        self.scrollBar.pack(side=RIGHT, fill=Y)
-        self.sumTree.configure(yscrollcommand=self.scrollBar.set)
+        scrollbar = ttk.Scrollbar(sumFrame, orient=VERTICAL, command=sumTree.yview)
+        scrollbar.pack(side=RIGHT, fill=Y)
+        sumTree.configure(yscrollcommand=scrollbar.set)
 
+        # PRINT ORDER SUMMARY  
+        orderSummary="SELECT menu.name, menu.price, foodOrders.qty FROM foodOrders INNER JOIN menu ON foodOrders.menuNo=menu.menuNo LEFT JOIN transactions ON foodOrders.orderNo=transactions.transNo WHERE transNo=%s" % transNo
+        orderSumResults = self.db.get(orderSummary)
 
-        billingSummary="SELECT menu.name, menu.price, foodOrders.qty FROM foodOrders INNER JOIN menu ON foodOrders.menuNo=menu.menuNo LEFT JOIN transactions ON foodOrders.orderNo=transactions.transNo WHERE transNo=%s" % transNo
-        sumResults = self.db.get(billingSummary)
+        sumTree.delete(*sumTree.get_children())
 
-        self.ogPrice = 0
-        self.sumTree.delete(*self.sumTree.get_children())
-        for row in sumResults:
+        for row in orderSumResults:
             name=row[0]
             unit=float(row[1]) if row[1] is not None else 0
             qty=int(row[2]) if row[2] is not None else 0
             total=unit*qty
-            self.ogPrice+=total
 
             _values=[name, unit, qty, total]
-            self.sumTree.insert("", tk.END, name, values=_values)
+            sumTree.insert("", tk.END, name, values=_values)
 
-        self.sumTree.insert("", tk.END, "blank", values=["", "", "", ""])
-        self.sumTree.insert("", tk.END, "total", values=["", "", "Total", self.ogPrice])
+        # PRINT BILL SUMMARY
+        self.ogPrice = int(self.db.get("SELECT ogprice FROM invoice INNER JOIN transactions ON invoice.invoiceNo = transactions.invoiceNo WHERE transactions.transNo = %s" % transNo)[0][0])
+        outerEntryFrame = Frame(outerFrame)
+        outerEntryFrame.pack(fill=X)
 
-        outerFrame = Frame(self.top)
-        outerFrame.pack(fill=X)
-        entryFrame = Frame(outerFrame)
-        entryFrame.pack(side=RIGHT, fill=X, pady=30, padx=50)
+        innerEntryFrame = Frame(outerEntryFrame)
+        innerEntryFrame.pack(side=RIGHT, pady=[30,0])
         
+        # TOTAL PRICE
         self.totPrice=round(self.ogPrice,2)
-        lbl = Label(entryFrame, text="Total Price:")
+        lbl = Label(innerEntryFrame, text="Total Price:")
         lbl.grid(row=0, column=0, sticky=W)
-        self.lblTotal = Label(entryFrame, text=self.totPrice)
+        self.lblTotal = Label(innerEntryFrame, text=self.totPrice)
         self.lblTotal.grid(row=0, column=1, sticky=NSEW)
 
-        lbl = Label(entryFrame, text="Discount Amount:")
+        # DISCOUNT AMT
+        lbl = Label(innerEntryFrame, text="Discount Amount:")
         lbl.grid(row=1, column=0, sticky=W)
-        self.entryDiscount = Entry(entryFrame, width=10, justify=CENTER)
+
+        self.entryDiscount = Entry(innerEntryFrame, width=10, justify=CENTER)
         self.entryDiscount.grid(row=1, column=1)
         self.entryDiscount.insert(END, 0)
         self.entryDiscount.bind('<Button>', lambda event : self.entryDiscount.delete(0,END))
@@ -213,35 +236,38 @@ class PopupDashboard():
         self.entryDiscount.bind('<FocusOut>', lambda event : self.recalculateTotal())
         self.entryDiscount.bind('<Return>', lambda event : self.recalculateTotal())
 
-        lbl = Label(entryFrame, text="%")
+        lbl = Label(innerEntryFrame, text="%")
         lbl.grid(row=1, column=2)
 
-        lbl = Label(entryFrame, text="Received Amount:")
+        # RECEIVED AMT
+        lbl = Label(innerEntryFrame, text="Received Amount:")
         lbl.grid(row=2, column=0)
-        self.entryRcv = Entry(entryFrame, width=10, justify=CENTER)
+
+        self.entryRcv = Entry(innerEntryFrame, width=10, justify=CENTER)
         self.entryRcv.grid(row=2, column=1)
         self.entryRcv.insert(END, 0)
         self.entryRcv.bind('<Button>', lambda event : self.entryRcv.delete(0,END))
         self.entryRcv.bind('<FocusIn>', lambda event : self.entryRcv.delete(0,END))
-        self.entryRcv.bind('<Leave>', lambda event : self.recalculateChange())
         self.entryRcv.bind('<FocusOut>', lambda event : self.recalculateChange())
         self.entryRcv.bind('<Return>', lambda event : self.recalculateChange())
 
-        lbl = Label(entryFrame, text="Change:")
+        # CHANGE
+        lbl = Label(innerEntryFrame, text="Change:")
         lbl.grid(row=3, column=0)
-        self.lblChange = Label(entryFrame, text=self.totPrice)
+        self.lblChange = Label(innerEntryFrame, text=self.totPrice)
         self.lblChange.grid(row=3, column=1, sticky=NSEW)
         self.lblChange.configure(text=0)
 
-        btnFrame = Frame(self.top)
-        btnFrame.pack(fill=X, pady=30, padx=50)
+        btnFrame = Frame(outerFrame)
+        btnFrame.pack(fill=X, pady=[30,0])
         
-        process = Button(btnFrame, text="Proceed", width=50, height=3, font=30, command=lambda : self.processTransaction(transNo))
-        process.pack(pady=5)
-        cancel = Button(btnFrame, text="Cancel", width=50, height=3, font=30, command=self.top.destroy)
-        cancel.pack()
+        btnProcess = Button(btnFrame, text="Proceed", height=2, font=30, command=lambda : self.processTransaction(transNo))
+        btnProcess.pack(fill=X, pady=3)
+        btnCancel = Button(btnFrame, text="Cancel", height=2, font=30, command=self.top.destroy)
+        btnCancel.pack(fill=X)
 
     def processTransaction(self, transNo):
+
         discount = self.entryDiscount.get()
         ogPrice = self.ogPrice
         totAmt = self.totPrice
@@ -252,17 +278,20 @@ class PopupDashboard():
         custNo = int(transactionInfo[0][0])
         invoiceNo = int(transactionInfo[0][1])
 
-        updateTransaction = "UPDATE invoice SET discount=%s, ogPrice=%s, totAmt=%s,rcvAmt=%s WHERE invoiceNo=%s" % (discount, ogPrice, totAmt, rcvAmt, invoiceNo)
-        updateDeptTime = "UPDATE customer SET deptTime=\"%s\" WHERE custNo=%s" % (time, custNo)
-        self.db.set(updateTransaction)
-        self.db.set(updateDeptTime)
-        self.parentClass.genTableTree()
-        self.parentClass.activeBill=0
-        self.parentClass.billTree.delete(*self.parentClass.billTree.get_children())
-        self.parentClass.tableBill.configure(text="Billing")
+        updateTableInvoice = "UPDATE invoice SET discount=%s, ogPrice=%s, totAmt=%s, rcvAmt=%s WHERE invoiceNo=%s" % (discount, ogPrice, totAmt, rcvAmt, invoiceNo)
+        self.db.set(updateTableInvoice)
+
+        updateTableDeptTime = "UPDATE customer SET deptTime=\"%s\" WHERE custNo=%s" % (time, custNo)
+        self.db.set(updateTableDeptTime)
+
+        self.parentClass.genOpenTablesTree()
+        self.parentClass.activeTable=0
+        self.parentClass.tableOrdersTree.delete(*self.parentClass.tableOrdersTree.get_children())
+        self.parentClass.tableOrdersTree.configure(text="Billing")
         self.top.destroy()
 
     def recalculateTotal(self):
+
         discount = self.entryDiscount.get()
         if (discount.isnumeric() and int(discount) < 100):
             self.totPrice = round(((100 - int(discount)) * 0.01 * self.ogPrice),2)
@@ -272,21 +301,19 @@ class PopupDashboard():
             self.entryDiscount.insert(0,0)
 
     def recalculateChange(self):
-        rcvAmt = int(self.entryRcv.get()) if len(self.entryRcv.get()) > 0 else 0
+
+        rcvAmt = int(self.entryRcv.get()) if self.entryRcv.get().isnumeric() else 0
         change = round((rcvAmt - self.totPrice)) if rcvAmt > 0 else 0
         self.lblChange.configure(text=change)
 
+        self.entryRcv.delete(0,END)
+        self.entryRcv.insert(0,rcvAmt)
+
 class DashboardWindow():
     def __init__ (self, master):
-        self.popup=PopupDashboard(master, self)
 
-        self.tableSelectCol = "#7"
-        self.tableRemoveCol = "#8"
-        self.billMinusCol ="#4"
-        self.billAddCol = "#6"
-        self.billRmCol="#7"
-        self.catAddCol="#3"
-        self.activeBill=0
+        self.popup=PopupDashboard(master, self)
+        self.activeTable=0
 
         self.master=master
         self.pc = Services.Local(master)
@@ -299,55 +326,64 @@ class DashboardWindow():
 
         self.init_backBtn(master)
 
-        self.frame2 = Frame(master)
-        self.frame2.pack(side=TOP, fill=BOTH, expand=True)
-        self.init_tableTree(self.frame2)
-        self.genTableTree()
+        upperBodyFrame = Frame(master)
+        upperBodyFrame.pack(expand=True, fill=BOTH, padx=50, pady=15)
+        self.init_openTablesTree(upperBodyFrame)
+        self.genOpenTablesTree()
 
-        self.frame3 = Frame(master)
-        self.frame3.pack(side=LEFT, fill=BOTH, expand=True)
-        self.init_catBtn(self.frame3)
+        lowerBodyFrame = Frame(master)
+        lowerBodyFrame.pack(expand=True, fill=Y, padx=50, pady=15)
 
-        self.frame4 = Frame(master)
-        self.frame4.pack(side=LEFT, fill=BOTH, expand=True)
-        self.init_catTree(self.frame4)
+        outerCatBtnFrame = Frame(lowerBodyFrame)
+        outerCatBtnFrame.pack(side=LEFT, fill=Y)
+        self.init_catBtn(outerCatBtnFrame)
 
-        self.frame5 = Frame(master)
-        self.frame5.pack(side=LEFT, fill=BOTH, expand=True)
-        self.init_billTree(self.frame5)
+        self.outerCatTreeFrame = Frame(lowerBodyFrame)
+        self.outerCatTreeFrame.pack(side=LEFT)
+        self.init_catTree(self.outerCatTreeFrame)
 
-        self.frame6 = Frame(master)
-        self.frame6.pack(side=LEFT, fill=BOTH, expand=True)
-        self.init_billBtn(self.frame6)
+        outerTableOrderTreeFrame = Frame(lowerBodyFrame)
+        outerTableOrderTreeFrame.pack(side=LEFT)
+        self.init_tableOrdersTree(outerTableOrderTreeFrame)
+
+        outerTableOrderBtnFrame = Frame(lowerBodyFrame)
+        outerTableOrderBtnFrame.pack(side=LEFT, fill=Y)
+        self.init_tableBillOutBtn(outerTableOrderBtnFrame)
         
         self.pc.setFullScreen(master)
 
+    def init_catList(self):
+
+        dbResults = self.db.get("SELECT DISTINCT category FROM menu")
+        self.catList = []
+
+        for elem in dbResults:
+            self.catList.append(elem[0])
 
     def init_backBtn(self, frame):
-        self.btnBack = Button(frame, text="Back to main window", height=2, command=self.master.destroy)
-        self.btnBack.pack(side=TOP, fill=BOTH)
 
-    def init_tableTree(self, frame):
-        name_index=1
-        price_index=3
+        btnBack = Button(frame, text="Back to main window", height=2, command=lambda : self.master.destroy())
+        btnBack.pack(side=TOP, fill=BOTH)
+
+    def init_openTablesTree(self, frame):
 
         lblFrame=Frame(frame)
-        lblFrame.pack(pady=[30,10], padx=20)
+        lblFrame.pack()
         lbl = Label(lblFrame, text="Open Tables", font=30)
         lbl.pack()
 
-        self.tableFrame=Frame(frame)
-        self.tableFrame.pack(side=TOP, expand=True, fill=BOTH, pady=[0,30], padx=20)
+        openTableTreeFrame=Frame(frame)
+        openTableTreeFrame.pack(side=TOP, expand=True, fill=BOTH)
 
-        self.tableTree = ttk.Treeview(self.tableFrame, column=("no", "tableNo", "partySize", "coPref", "qty", "totAmt", "select", "remove"), show='headings')
+        self.tableTree = ttk.Treeview(openTableTreeFrame, column=("no", "tableNo", "partySize", "coPref", "qty", "totAmt", "select", "remove"), show='headings')
         ttk.Style().configure("Treeview", rowheight=50)
 
         self.tableTree.column("no", width=self.pc.percentScreenW(3), stretch=True, anchor=CENTER)
         self.tableTree.column("tableNo", width=self.pc.percentScreenW(5), stretch=True, anchor=CENTER)
         self.tableTree.column("partySize", width=self.pc.percentScreenW(5), stretch=True, anchor=CENTER)
-        self.tableTree.column("coPref", width=self.pc.percentScreenW(20), stretch=True, anchor=CENTER)
-        self.tableTree.column("qty", width=self.pc.percentScreenW(20), stretch=True, anchor=CENTER)
-        self.tableTree.column("totAmt", width=self.pc.percentScreenW(20), stretch=True, anchor=CENTER)
+        self.tableTree.column("coPref", width=self.pc.percentScreenW(10), stretch=True, anchor=CENTER)
+        self.tableTree.column("qty", width=self.pc.percentScreenW(10), stretch=True, anchor=CENTER)
+        self.tableTree.column("totAmt", width=self.pc.percentScreenW(10), stretch=True, anchor=CENTER)
         self.tableTree.column("select", width=self.pc.percentScreenW(10), stretch=True, anchor=CENTER)
         self.tableTree.column("remove", width=self.pc.percentScreenW(10), stretch=True, anchor=CENTER)
         
@@ -362,27 +398,42 @@ class DashboardWindow():
 
         self.tableTree.pack(side=LEFT, expand=True, fill=BOTH)
 
-        self.tableScroll = ttk.Scrollbar(self.tableFrame, orient=VERTICAL, command=self.tableTree.yview)
-        self.tableScroll.pack(side=RIGHT, fill=Y)
-        self.tableTree.configure(yscrollcommand=self.tableScroll.set)
+        openTablesScroll = ttk.Scrollbar(openTableTreeFrame, orient=VERTICAL, command=self.tableTree.yview)
+        openTablesScroll.pack(side=RIGHT, fill=Y)
+        self.tableTree.configure(yscrollcommand=openTablesScroll.set)
 
         self.tableTree.bind("<Button-1>", self.tableProcessClick)
 
-    def init_catTree(self, frame):
-        name_index=1
-        price_index=3
+    def init_catBtn(self, frame):
 
-        catTreeInnerFrame=Frame(frame)
-        catTreeInnerFrame.pack(pady=[30,0], padx=20)
-        lbl = Label(catTreeInnerFrame, text="Category Items", font=30)
+        lbl = Label(frame, text="Category List", font=30)
         lbl.pack(pady=[0,10])
 
-        self.foodFrame=Frame(catTreeInnerFrame)
-        self.foodFrame.pack(expand=True, fill=BOTH, padx=20, pady=[0,30])
+        btnFrame=Frame(frame)
+        btnFrame.pack(expand=True)
+
+        row_num=0
+        for i in range(len(self.catList)):
+            elem = self.catList[i]
+            self.btn = Button(btnFrame, text=self.catList[i], width=10, height=2, command=lambda category=elem : self.genCatTree(category))
+            if (i%2==0):
+                self.btn.grid(row=row_num, column=0, padx=5, pady=5)
+            else:
+                self.btn.grid(row=row_num, column=1, padx=5, pady=5)
+                row_num+=1
+
+    def init_catTree(self, frame):
+
+        lbl = Label(frame, text="Category Items", font=30)
+        lbl.pack(pady=[0,15])
+
+        self.foodFrame=Frame(frame)
+        self.foodFrame.pack(expand=True, padx=20)
 
         self.catTree = ttk.Treeview(self.foodFrame, column=("name", "price", "add"), show='headings', selectmode="extended")
+        ttk.Style().configure("Treeview", rowheight=50)
         
-        self.catTree.column("name", width=self.pc.percentScreenW(15), stretch=True)
+        self.catTree.column("name", width=self.pc.percentScreenW(20), stretch=True)
         self.catTree.column("price", width=self.pc.percentScreenW(5), anchor=CENTER, stretch=True)
         self.catTree.column("add", width=self.pc.percentScreenW(5), anchor=CENTER, stretch=False)
         
@@ -398,85 +449,54 @@ class DashboardWindow():
 
         self.catTree.bind("<Button-1>", self.catProcessClick)
 
-    def init_billTree(self, frame):
-        name_index=1
-        price_index=3
+    def init_tableOrdersTree(self, frame):
 
-        billTreeInnerFrame=Frame(frame)
-        billTreeInnerFrame.pack(pady=[30,0], padx=20)
-        self.tableBill = Label(billTreeInnerFrame, text="Billing", font=30)
-        self.tableBill.pack(pady=[0,10])
+        self.lblTable = Label(frame, text="Table Orders", font=30)
+        self.lblTable.pack(pady=[0,15])
 
-        self.billFrame=Frame(billTreeInnerFrame)
-        self.billFrame.pack(expand=True, fill=BOTH, pady=[0,30], padx=20)
+        tableOrdersTreeFrame=Frame(frame)
+        tableOrdersTreeFrame.pack(expand=True, padx=20)
 
-        self.billTree = ttk.Treeview(self.billFrame, column=("no", "name", "price", "minus", "qty", "add", "rm"), show='headings')
+        self.tableOrdersTree = ttk.Treeview(tableOrdersTreeFrame, column=("no", "name", "price", "minus", "qty", "add", "rm"), show='headings')
+        ttk.Style().configure("Treeview", rowheight=50)
         
-        self.billTree.column("no", width=self.pc.percentScreenW(3), anchor=CENTER, stretch=False)
-        self.billTree.column("name", width=self.pc.percentScreenW(15), stretch=True)
-        self.billTree.column("price", width=self.pc.percentScreenW(5), anchor=CENTER, stretch=True)
-        self.billTree.column("minus", width=self.pc.percentScreenW(3), anchor=CENTER, stretch=False)
-        self.billTree.column("qty", width=self.pc.percentScreenW(3), anchor=CENTER, stretch=True)
-        self.billTree.column("add", width=self.pc.percentScreenW(3), anchor=CENTER, stretch=True)
-        self.billTree.column("rm", width=self.pc.percentScreenW(5), anchor=CENTER, stretch=False)
+        self.tableOrdersTree.column("no", width=self.pc.percentScreenW(3), anchor=CENTER, stretch=False)
+        self.tableOrdersTree.column("name", width=self.pc.percentScreenW(15), stretch=True)
+        self.tableOrdersTree.column("price", width=self.pc.percentScreenW(5), anchor=CENTER, stretch=True)
+        self.tableOrdersTree.column("minus", width=self.pc.percentScreenW(3), anchor=CENTER, stretch=False)
+        self.tableOrdersTree.column("qty", width=self.pc.percentScreenW(3), anchor=CENTER, stretch=True)
+        self.tableOrdersTree.column("add", width=self.pc.percentScreenW(3), anchor=CENTER, stretch=True)
+        self.tableOrdersTree.column("rm", width=self.pc.percentScreenW(5), anchor=CENTER, stretch=False)
         
-        self.billTree.heading("no", text="")
-        self.billTree.heading("name", text="Name")
-        self.billTree.heading("price", text="Price")
-        self.billTree.heading("minus", text="Minus")
-        self.billTree.heading("qty", text="Qty")
-        self.billTree.heading("add", text="Add")
-        self.billTree.heading("rm", text="Remove")
+        self.tableOrdersTree.heading("no", text="")
+        self.tableOrdersTree.heading("name", text="Name")
+        self.tableOrdersTree.heading("price", text="Price")
+        self.tableOrdersTree.heading("minus", text="Minus")
+        self.tableOrdersTree.heading("qty", text="Qty")
+        self.tableOrdersTree.heading("add", text="Add")
+        self.tableOrdersTree.heading("rm", text="Remove")
 
-        self.billTree.grid(column=0, row=0, sticky=NSEW)
+        self.tableOrdersTree.grid(column=0, row=0, sticky=NSEW)
 
 
-        self.billScroll = ttk.Scrollbar(self.billFrame, orient=VERTICAL, command=self.billTree.yview)
+        self.billScroll = ttk.Scrollbar(tableOrdersTreeFrame, orient=VERTICAL, command=self.tableOrdersTree.yview)
         self.billScroll.grid(column=1, row=0, sticky=NS)
-        self.billTree.configure(yscrollcommand=self.billScroll.set)
+        self.tableOrdersTree.configure(yscrollcommand=self.billScroll.set)
 
-        self.billTree.bind("<Button-1>", self.billProcessClick)
+        self.tableOrdersTree.bind("<Button-1>", self.billProcessClick)
 
-    def init_billBtn(self, frame):
-        billBtnOuterFrame=Frame(frame)
-        billBtnOuterFrame.pack(side=LEFT, padx=[0,40], pady=[30,10])
-        self.billoutFrame=Frame(billBtnOuterFrame)
-        self.billoutFrame.pack()
-        self.billBtn=Button(self.billoutFrame, text="Bill Out", height=3, width=7, background="green", foreground="white", font='bold', command=lambda : self.billout())
-        self.billBtn.pack(side=TOP, pady=10)
-        self.cancelBtn=Button(self.billoutFrame, text="Cancel", height=3, width=7, background="red", foreground="white", font='bold', command=lambda : self.cancelBill())
-        self.cancelBtn.pack(side=TOP, pady=10)
+    def init_tableBillOutBtn(self, frame):
 
-    def init_catBtn(self, frame):
+        btnFrame=Frame(frame)
+        btnFrame.pack(expand=True)
 
-        billBtnOuterFrame=Frame(frame)
-        billBtnOuterFrame.pack(side=TOP, padx=[40,0], pady=[30,0])
-        billBtnInnerFrame = Frame(billBtnOuterFrame)
-        billBtnInnerFrame.pack()
-        lbl = Label(billBtnInnerFrame, text="Category List", font=30)
-        lbl.pack(pady=[0,10])
+        self.billBtn=Button(btnFrame, text="Bill Out", height=3, width=7, background="green", foreground="white", font='bold', command=lambda : self.billout())
+        self.billBtn.pack(pady=10)
+        self.cancelBtn=Button(btnFrame, text="Cancel", height=3, width=7, background="red", foreground="white", font='bold', command=lambda : self.cancelBill())
+        self.cancelBtn.pack(pady=10)
 
-        self.catBtnFrame=Frame(billBtnInnerFrame)
-        self.catBtnFrame.pack(padx=30)
-        row_num=0
-
-        for i in range(len(self.catList)):
-            elem = self.catList[i]
-            self.btn = Button(self.catBtnFrame, text=self.catList[i], width=10, height=2, command=lambda cat=elem:self.genCatTree(cat))
-            if (i%2==0):
-                self.btn.grid(row=row_num, column=0, padx=5, pady=5)
-            else:
-                self.btn.grid(row=row_num, column=1, padx=5, pady=5)
-                row_num+=1
-
-    def init_catList(self):
-        dbResults = self.db.get("SELECT DISTINCT category FROM menu")
-        self.catList = []
-
-        for elem in dbResults:
-            self.catList.append(elem[0])
-
-    def genTableTree(self):
+    def genOpenTablesTree(self):
+        
         self.tableTree.delete(*self.tableTree.get_children())
 
         self.tableResults = self.db.get("SELECT transactions.transNo, customer.tableNo, customer.partySize, customer.checkoutPref, sum(qty), invoice.totAmt FROM transactions LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo LEFT JOIN foodOrders ON foodOrders.orderNo=transactions.transNo LEFT JOIN customer on transactions.custNo=customer.custNo WHERE invoice.rcvAmt IS NULL GROUP BY transactions.transNo ORDER BY customer.arrTime DESC")
@@ -485,65 +505,74 @@ class DashboardWindow():
         self.tableTree.insert("", tk.END, 0, values=("", "", "", "", "", "", "Add Table", "Add Table"))
 
         for row in self.tableResults:
-            _values=[self.tableInc, row[1], row[2], row[3], row[4], row[5], "Select", "Remove"]
+            qty = 0 if row[4] == None else row[4]
+
+            _values=[self.tableInc, row[1], row[2], row[3], qty, row[5], "Select", "Remove"]
             self.tableTree.insert("", tk.END, self.tableInc, values=_values)
             self.tableInc+=1
 
         self.tableTree.insert("", tk.END, self.tableInc, values=("", "", "", "", "", "", "Add Table", "Add Table"))
-        ttk.Style().configure("Treeview", rowheight=30)
 
     def genCatTree(self, cat):
-        name_index=1
-        price_index=3
+
 
         self.catTree.delete(*self.catTree.get_children())
-        self.catResults=self.db.get("SELECT * FROM menu WHERE category = \"%s\" " % cat)
+        self.catResults=self.db.get("SELECT menuNo, name, price FROM menu WHERE category = \"%s\" " % cat)
 
         for row in self.catResults:
-            _values=[row[name_index], row[price_index], "add"]
+            _values=[row[1], row[2], "add"]
             self.catTree.insert("", tk.END, row[0], values=_values)
 
     def tableProcessClick(self, event):
+
         item = self.tableTree.identify('item', event.x, event.y)
         row = self.tableTree.identify_row(event.y)
         col = self.tableTree.identify_column(event.x)
+
+        selectCol = "#7"
+        removeCol = "#8"
         
         if row.isnumeric():
             if int(row) > 0 and int(row) <= len(self.tableResults):
                 elem=int(row)-1
-                if (col == self.tableSelectCol):
-                    self.genBillTree(self.tableResults[elem][0])
-                elif (col == self.tableRemoveCol):
+                if (col == selectCol):
+                    self.genTableOrders(self.tableResults[elem][0])
+                elif (col == removeCol):
                     self.popup.genRmTable(self.tableResults[elem])
-            elif (col == self.tableSelectCol or col == self.tableRemoveCol):
+            elif (col == selectCol or col == removeCol):
                 self.popup.genAddTable()
 
     def billProcessClick(self, event):
-        item = self.billTree.identify('item', event.x, event.y)
-        row = self.billTree.identify_row(event.y)
-        col = self.billTree.identify_column(event.x)
+
+        item = self.tableOrdersTree.identify('item', event.x, event.y)
+        row = self.tableOrdersTree.identify_row(event.y)
+        col = self.tableOrdersTree.identify_column(event.x)
+        minusCol ="#4"
+        addCol = "#6"
+        removeCol="#7"
         
         if row.isnumeric():
             elem=int(row)-1
-            orderNo = self.activeBill
-            menuNo=self.billResults[elem][4] 
-            qty=int(self.billResults[elem][3])
+            orderNo = self.activeTable
+            menuNo=self.tableOrderResults[elem][4] 
+            qty=int(self.tableOrderResults[elem][3])
 
-            if (col == self.billAddCol):
+            if (col == addCol):
                 qty+=1
-            elif (col == self.billMinusCol):
+            elif (col == minusCol):
                 qty-=1
 
             updateBilling = "UPDATE foodOrders SET qty=%s WHERE orderNo=%s AND menuNo=%s" % (qty, orderNo, menuNo)
 
-            if (col == self.billRmCol or qty<=0):
+            if (col == removeCol or qty<=0):
                 updateBilling = "DELETE FROM foodOrders WHERE orderNo=%s AND menuNo=%s" % (orderNo, menuNo)
 
             self.db.set(updateBilling)
-            self.updateBillTotal(self.activeBill)
-            self.genBillTree(self.activeBill)
+            self.updateTableOrderInvoice(self.activeTable)
+            self.genTableOrders(self.activeTable)
 
-    def updateBillTotal(self, transNo):
+    def updateTableOrderInvoice(self, transNo):
+
         orderSummary="SELECT menu.price, foodOrders.qty, transactions.invoiceNo FROM transactions LEFT JOIN foodOrders ON transactions.transNo=foodOrders.orderNo LEFT JOIN menu ON foodOrders.menuNo=menu.menuNo WHERE transNo=%s" % transNo
         orderResults = self.db.get(orderSummary)
 
@@ -555,54 +584,59 @@ class DashboardWindow():
 
         updateTotal="UPDATE invoice SET ogPrice=%s, totAmt=%s WHERE invoiceNo=%s" % (ogPrice, ogPrice, orderResults[0][2])
         self.db.set(updateTotal)
-        self.genTableTree()
+        self.genOpenTablesTree()
 
     def catProcessClick(self, event):
+
         item = self.catTree.identify('item', event.x, event.y)
         row = self.catTree.identify_row(event.y)
         col = self.catTree.identify_column(event.x)
+        addCol="#3"
 
-        if (col == self.catAddCol and self.activeBill>0):
-            updateBilling = "INSERT INTO foodOrders(orderNo, menuNo, qty) VALUES(%s, %s, %s)" % (self.activeBill, row, 1)
+        if (col == addCol and self.activeTable>0):
+            updateTableOrders = "INSERT INTO foodOrders(orderNo, menuNo, qty) VALUES(%s, %s, %s)" % (self.activeTable, row, 1)
 
-            for elem in self.billResults:
-                if (row == str(elem[4])):
-                    qty=elem[3]+1
-                    updateBilling = "UPDATE foodOrders SET qty=%s WHERE orderNo=%s AND menuNo=%s" % (qty, self.activeBill, row)
+            for order in self.tableOrderResults:
+                if (row == str(order[4])):
+                    qty=order[3]+1
+                    updateTableOrders = "UPDATE foodOrders SET qty=%s WHERE orderNo=%s AND menuNo=%s" % (qty, self.activeTable, row)
             
-            self.db.set(updateBilling)
-        elif col == self.catAddCol and self.activeBill == 0:
+            self.db.set(updateTableOrders)
+        elif col == addCol and self.activeTable == 0:
             msgbox.showerror("Error", "No table selected")
 
-        self.updateBillTotal(self.activeBill)
-        self.genBillTree(self.activeBill)
+        self.updateTableOrderInvoice(self.activeTable)
+        self.genTableOrders(self.activeTable)
 
-    def genBillTree(self, transNo):
-        self.activeBill = transNo            
+    def genTableOrders(self, transNo):
 
-        #FIX LABEL
+        self.activeTable = transNo            
+
+        # UPDATE TABLE LABEL
         custInfo = self.db.get("SELECT customer.tableNo, customer.checkoutPref FROM Transactions INNER JOIN customer ON transactions.custNo=customer.custNo WHERE transNo = %s" % transNo)
-        billLabel = "For Table %s Billing" % custInfo[0][0] if (custInfo[0][0] != None) else "For %s Billing" % custInfo[0][1]
-        self.tableBill.configure(text=billLabel)
+        billLabel = "For Table %s Orders" % custInfo[0][0] if (custInfo[0][0] != None) else "For %s Orders" % custInfo[0][1]
+        self.lblTable.configure(text=billLabel)
 
-        #GET BILLING INFO
-        self.billTree.delete(*self.billTree.get_children())
-        self.billResults = self.db.get("SELECT foodOrders.orderNo, menu.name, menu.price, foodOrders.qty, foodOrders.menuNo FROM foodOrders LEFT JOIN menu ON foodOrders.menuNo=menu.menuNo WHERE foodOrders.orderNo=%s" % self.activeBill)
+        # GET BILLING INFO
+        self.tableOrdersTree.delete(*self.tableOrdersTree.get_children())
+        self.tableOrderResults = self.db.get("SELECT foodOrders.orderNo, menu.name, menu.price, foodOrders.qty, foodOrders.menuNo FROM foodOrders LEFT JOIN menu ON foodOrders.menuNo=menu.menuNo WHERE foodOrders.orderNo=%s" % self.activeTable)
 
         self.billInc=1
-        for row in self.billResults:
+        for row in self.tableOrderResults:
             _values=[self.billInc, row[1], row[2], "-", row[3], "+", "Remove"]
-            self.billTree.insert("", tk.END, self.billInc, values=_values)
+            self.tableOrdersTree.insert("", tk.END, self.billInc, values=_values)
             self.billInc+=1
     
     def cancelBill(self):
-        self.billTree.delete(*self.billTree.get_children())
-        self.activeBill = 0
-        self.tableBill.configure(text="Billing")
+
+        self.tableOrdersTree.delete(*self.tableOrdersTree.get_children())
+        self.activeTable = 0
+        self.lblTable.configure(text="Table Orders")
 
     def billout(self):
-        if (self.activeBill > 0):
-            self.popup.genBillOut(self.activeBill)
+
+        if (self.activeTable > 0):
+            self.popup.genBillOut(self.activeTable)
         else:
             msgbox.showerror("Error", "No Bill Selected")
 
