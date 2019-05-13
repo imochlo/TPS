@@ -19,7 +19,6 @@ image_index=4
 
 class PopupMenu():
     def __init__ (self, master, parentClass):
-
         self.master=master
         self.parentClass = parentClass
 
@@ -27,7 +26,6 @@ class PopupMenu():
         self.db = Services.Db()
 
     def popWindow(self, process, menuItem):
-
         self.top=Toplevel(self.master)
         self.top.title(process)
         self.top.bind("<Control-w>", lambda event: self.top.destroy())
@@ -49,7 +47,6 @@ class PopupMenu():
             self.genTemplateWindow(frame)
 
     def genRemoveWindow(self, frame):
-
         lblFrame = Frame(frame)
         lblFrame.pack()
 
@@ -72,7 +69,6 @@ class PopupMenu():
         btn.pack(side=RIGHT, padx=10)
 
     def genTemplateWindow(self, frame):
-
         catList = self.db.get("SELECT DISTINCT category FROM menu")
 
         entryFrame = Frame(frame)
@@ -261,8 +257,6 @@ class MenuWindow():
 if __name__ == '__main__':
     root = Tk()
     root.bind("<Control-w>", lambda event: root.destroy())
-
-    pc = Services.Local(root)
 
     menu = MenuWindow(root)
     root.mainloop()

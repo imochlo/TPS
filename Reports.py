@@ -100,7 +100,6 @@ class ReportsWindow():
         ttk.Style().configure("Treeview", rowheight=50)
 
     def genSalesRep(self):
-
         # SALES REP SET UP
         if (self.durationOpt.get() == 1):
             dateNow = self.pc.getDateNow()
@@ -146,7 +145,6 @@ class ReportsWindow():
         self.reportTree.insert("", tk.END, value=["", "", "", "", "", "Total Received:", sumRcv])
 
     def genOrdersRep(self):
-        
         # ORDER REP SET UP
         if (self.durationOpt.get() == 1):
             dateNow = self.pc.getDateNow()
@@ -180,7 +178,6 @@ class ReportsWindow():
             listInc+=1
 
     def genCustomersRep(self):
-        
         # CUSTOMER REP SET UP
         if (self.durationOpt.get() == 1):
             dateNow = self.pc.getDateNow()

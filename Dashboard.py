@@ -14,7 +14,6 @@ import Services
 
 class PopupDashboard():
     def __init__(self, master, parentClass):
-
         self.master = master
         self.parentClass = parentClass
 
@@ -22,7 +21,6 @@ class PopupDashboard():
         self.db = Services.Db()
 
     def genRmTable(self, tableInfo):
-
         self.top = Toplevel(self.master)
 
         topFrame = Frame(self.top)
@@ -52,7 +50,6 @@ class PopupDashboard():
         btn.pack(side=RIGHT, padx=[0,10])
 
     def genRemoveDone(self, transNo):
-
         getTables="SELECT * FROM transactions WHERE transNo = " + str(transNo)
         pks = self.db.get(getTables)
 
@@ -72,7 +69,6 @@ class PopupDashboard():
         self.top.destroy()
 
     def genAddTable(self):
-
         self.top = Toplevel(self.master)
         self.top.title("Add Table")
         self.top.bind("<Control-w>", lambda event: self.top.destroy())
@@ -120,7 +116,6 @@ class PopupDashboard():
         self.btn.pack(side=RIGHT, padx=10)
 
     def genAddDone(self):
-
         # GET TIME AND DATE
         time=self.pc.getTimeNow()
         date=self.pc.getDateNow()
@@ -154,7 +149,6 @@ class PopupDashboard():
         self.top.destroy()
 
     def genBillOut(self, transNo):
-
         self.top = Toplevel(self.master)
         self.top.title("Billing Out")
         self.top.bind("<Control-w>", lambda event: self.top.destroy())
@@ -267,7 +261,6 @@ class PopupDashboard():
         btnCancel.pack(fill=X)
 
     def processTransaction(self, transNo):
-
         discount = self.entryDiscount.get()
         ogPrice = self.ogPrice
         totAmt = self.totPrice
@@ -291,7 +284,6 @@ class PopupDashboard():
         self.top.destroy()
 
     def recalculateTotal(self):
-
         discount = self.entryDiscount.get()
         if (discount.isnumeric() and int(discount) < 100):
             self.totPrice = round(((100 - int(discount)) * 0.01 * self.ogPrice),2)
@@ -301,7 +293,6 @@ class PopupDashboard():
             self.entryDiscount.insert(0,0)
 
     def recalculateChange(self):
-
         rcvAmt = int(self.entryRcv.get()) if self.entryRcv.get().isnumeric() else 0
         change = round((rcvAmt - self.totPrice)) if rcvAmt > 0 else 0
         self.lblChange.configure(text=change)
@@ -311,7 +302,6 @@ class PopupDashboard():
 
 class DashboardWindow():
     def __init__ (self, master):
-
         self.popup=PopupDashboard(master, self)
         self.activeTable=0
 
@@ -353,7 +343,6 @@ class DashboardWindow():
         self.pc.setFullScreen(master)
 
     def init_catList(self):
-
         dbResults = self.db.get("SELECT DISTINCT category FROM menu")
         self.catList = []
 
@@ -361,12 +350,10 @@ class DashboardWindow():
             self.catList.append(elem[0])
 
     def init_backBtn(self, frame):
-
         btnBack = Button(frame, text="Back to main window", height=2, command=lambda : self.master.destroy())
         btnBack.pack(side=TOP, fill=BOTH)
 
     def init_openTablesTree(self, frame):
-
         lblFrame=Frame(frame)
         lblFrame.pack()
         lbl = Label(lblFrame, text="Open Tables", font=30)
@@ -405,7 +392,6 @@ class DashboardWindow():
         self.tableTree.bind("<Button-1>", self.tableProcessClick)
 
     def init_catBtn(self, frame):
-
         lbl = Label(frame, text="Category List", font=30)
         lbl.pack(pady=[0,10])
 
@@ -423,7 +409,6 @@ class DashboardWindow():
                 row_num+=1
 
     def init_catTree(self, frame):
-
         lbl = Label(frame, text="Category Items", font=30)
         lbl.pack(pady=[0,15])
 
@@ -450,7 +435,6 @@ class DashboardWindow():
         self.catTree.bind("<Button-1>", self.catProcessClick)
 
     def init_tableOrdersTree(self, frame):
-
         self.lblTable = Label(frame, text="Table Orders", font=30)
         self.lblTable.pack(pady=[0,15])
 
@@ -486,7 +470,6 @@ class DashboardWindow():
         self.tableOrdersTree.bind("<Button-1>", self.billProcessClick)
 
     def init_tableBillOutBtn(self, frame):
-
         btnFrame=Frame(frame)
         btnFrame.pack(expand=True)
 
@@ -496,7 +479,6 @@ class DashboardWindow():
         self.cancelBtn.pack(pady=10)
 
     def genOpenTablesTree(self):
-        
         self.tableTree.delete(*self.tableTree.get_children())
 
         self.tableResults = self.db.get("SELECT transactions.transNo, customer.tableNo, customer.partySize, customer.checkoutPref, sum(qty), invoice.totAmt FROM transactions LEFT JOIN invoice ON transactions.invoiceNo=invoice.invoiceNo LEFT JOIN foodOrders ON foodOrders.orderNo=transactions.transNo LEFT JOIN customer on transactions.custNo=customer.custNo WHERE invoice.rcvAmt IS NULL GROUP BY transactions.transNo ORDER BY customer.arrTime DESC")
@@ -514,8 +496,6 @@ class DashboardWindow():
         self.tableTree.insert("", tk.END, self.tableInc, values=("", "", "", "", "", "", "Add Table", "Add Table"))
 
     def genCatTree(self, cat):
-
-
         self.catTree.delete(*self.catTree.get_children())
         self.catResults=self.db.get("SELECT menuNo, name, price FROM menu WHERE category = \"%s\" " % cat)
 
@@ -524,7 +504,6 @@ class DashboardWindow():
             self.catTree.insert("", tk.END, row[0], values=_values)
 
     def tableProcessClick(self, event):
-
         item = self.tableTree.identify('item', event.x, event.y)
         row = self.tableTree.identify_row(event.y)
         col = self.tableTree.identify_column(event.x)
@@ -543,7 +522,6 @@ class DashboardWindow():
                 self.popup.genAddTable()
 
     def billProcessClick(self, event):
-
         item = self.tableOrdersTree.identify('item', event.x, event.y)
         row = self.tableOrdersTree.identify_row(event.y)
         col = self.tableOrdersTree.identify_column(event.x)
@@ -572,7 +550,6 @@ class DashboardWindow():
             self.genTableOrders(self.activeTable)
 
     def updateTableOrderInvoice(self, transNo):
-
         orderSummary="SELECT menu.price, foodOrders.qty, transactions.invoiceNo FROM transactions LEFT JOIN foodOrders ON transactions.transNo=foodOrders.orderNo LEFT JOIN menu ON foodOrders.menuNo=menu.menuNo WHERE transNo=%s" % transNo
         orderResults = self.db.get(orderSummary)
 
@@ -587,7 +564,6 @@ class DashboardWindow():
         self.genOpenTablesTree()
 
     def catProcessClick(self, event):
-
         item = self.catTree.identify('item', event.x, event.y)
         row = self.catTree.identify_row(event.y)
         col = self.catTree.identify_column(event.x)
@@ -609,7 +585,6 @@ class DashboardWindow():
         self.genTableOrders(self.activeTable)
 
     def genTableOrders(self, transNo):
-
         self.activeTable = transNo            
 
         # UPDATE TABLE LABEL
@@ -628,13 +603,11 @@ class DashboardWindow():
             self.billInc+=1
     
     def cancelBill(self):
-
         self.tableOrdersTree.delete(*self.tableOrdersTree.get_children())
         self.activeTable = 0
         self.lblTable.configure(text="Table Orders")
 
     def billout(self):
-
         if (self.activeTable > 0):
             self.popup.genBillOut(self.activeTable)
         else:
@@ -643,8 +616,6 @@ class DashboardWindow():
 if __name__ == '__main__':
     root = Tk()
     root.bind("<Control-w>", lambda event: root.destroy())
-
-    pc = Services.Local(root)
 
     dashboard = DashboardWindow(root)
     root.mainloop()

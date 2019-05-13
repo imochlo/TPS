@@ -18,7 +18,6 @@ import Reports
 CWD=os.getcwd()
 
 class StartupWindow():
-
     PAD_FRBTN_X = 40
     PAD_FRBTN_Y = 40
     PAD_FRLB_X = 30
